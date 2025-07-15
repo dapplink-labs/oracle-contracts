@@ -4,7 +4,7 @@ parent:
 -->
 
 <div align="center">
-  <h1> manta-fp-contracts</h1>
+  <h1> oracle-contracts</h1>
 </div>
 
 ## 2.Usage
