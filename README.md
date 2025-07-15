@@ -41,7 +41,5 @@ $ forge snapshot
 
 ### Deploy
 
-```shell
-$ forge script script/deployFinalityRelayer.s.sol:deployFinalityRelayerScript --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
-```
+tbd
 
