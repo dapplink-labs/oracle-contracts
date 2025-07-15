@@ -4,3 +4,14 @@ out = "out"
 libs = ["lib"]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+solc = "0.8.22"
+# https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
+fs_permissions = [{ access = "read-write", path = "./"}]
+
+[rpc_endpoints]
+sepolia = "${SEPOLIA_RPC_URL}"
+
