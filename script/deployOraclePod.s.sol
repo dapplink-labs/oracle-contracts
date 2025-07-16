@@ -12,7 +12,6 @@ import { IOracleManager } from "../src/interfaces/IOracleManager.sol";
 import { IOraclePod } from "../src/interfaces/IOraclePod.sol";
 
 
-
 contract deployOraclePodScript is Script {
     EmptyContract public emptyContract;
 
