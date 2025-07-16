@@ -11,19 +11,6 @@ import "../interfaces/IOraclePod.sol";
 import "./OracleManagerStorage.sol";
 
 contract OracleManager is OwnableUpgradeable, OracleManagerStorage, IOracleManager {
-
-    uint256 internal constant TOTAL_CHALLENGE_PERIOD = 259200; // 3 days
-
-    uint256 internal constant MANTA_REDUCE_PERIOD = 86400;  // 1 days
-
-    uint256 internal constant BITCOIN_REDUCE_PERIOD = 86400; // 1 days
-
-    uint256 internal constant MIN_CHALLENGE_PERIOD = 43200 ; // 0.5 days
-
-    uint256 internal constant TARGET_MANTA =  1000000 * 10e17;
-
-    uint256 internal constant TARGET_BITCOIN = 1000 * 10e7;
-
     modifier onlyAggregatorManager() {
         require(
             msg.sender == aggregatorAddress,
