@@ -6,7 +6,6 @@ import { IOraclePod } from "../interfaces/IOraclePod.sol";
 
 
 abstract contract OraclePodStorage is IOraclePod {
-
     address public oracleManager;
 
     uint256 public marketPrice;

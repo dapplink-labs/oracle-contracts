@@ -39,6 +39,7 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         external
         initializer
     {
+        __Ownable_init(_initialOwner);
         _transferOwnership(_initialOwner);
         whiteListAddress = _whiteListAddress;
         oracleManager = _oracleManager;

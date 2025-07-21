@@ -19,7 +19,8 @@ contract OraclePod is Initializable, OwnableUpgradeable, OraclePodStorage {
         _;
     }
 
-    function initialize(address _initialOwner,  address _oracleManager) external initializer {
+    function initialize(address _initialOwner, address _oracleManager) external initializer {
+        __Ownable_init(_initialOwner);
         _transferOwnership(_initialOwner);
         oracleManager = _oracleManager;
     }

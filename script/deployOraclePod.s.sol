@@ -21,17 +21,19 @@ contract deployOraclePodScript is Script {
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address oracleManagerAddr =  vm.envAddress("ORACLE_MANAGER");
+        address oracleManagerAddr = vm.envAddress("ORACLE_MANAGER");
 
         address deployerAddress = vm.addr(deployerPrivateKey);
+
         vm.startBroadcast(deployerPrivateKey);
 
-
+        emptyContract = new EmptyContract();
         TransparentUpgradeableProxy proxyOraclePod = new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         oraclePod = OraclePod(address(proxyOraclePod));
         oraclePodImplementation = new OraclePod();
-        oraclePodAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyOraclePod)));
+         oraclePodAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyOraclePod)));
 
+        console.log("oraclePodImplementation===", address(oraclePodImplementation));
 
         oraclePodAdmin.upgradeAndCall(
             ITransparentUpgradeableProxy(address(oraclePod)),

@@ -24,22 +24,23 @@ contract deployOracleScript is Script {
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address fpAdmin =  vm.envAddress("FP_ADMIN");
         address relayerManagerAddr =  vm.envAddress("RELAYER_MANAGER");
 
         address deployerAddress = vm.addr(deployerPrivateKey);
         vm.startBroadcast(deployerPrivateKey);
 
         emptyContract = new EmptyContract();
-        TransparentUpgradeableProxy proxyBlsApkRegistry = new TransparentUpgradeableProxy(address(emptyContract), fpAdmin, "");
+        TransparentUpgradeableProxy proxyBlsApkRegistry = new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         blsApkRegistry = BLSApkRegistry(address(proxyBlsApkRegistry));
         blsApkRegistryImplementation = new BLSApkRegistry();
         blsApkRegistryProxyAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyBlsApkRegistry)));
 
-        TransparentUpgradeableProxy proxyOracleManager = new TransparentUpgradeableProxy(address(emptyContract), fpAdmin, "");
+
+        TransparentUpgradeableProxy proxyOracleManager = new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         oracleManager = OracleManager(address(proxyOracleManager));
         oracleManagerImplementation = new OracleManager();
         oracleManagerAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyOracleManager)));
+
 
         blsApkRegistryProxyAdmin.upgradeAndCall(
             ITransparentUpgradeableProxy(address(blsApkRegistry)),
@@ -47,8 +48,8 @@ contract deployOracleScript is Script {
             abi.encodeWithSelector(
                 BLSApkRegistry.initialize.selector,
                 deployerAddress,
-                proxyOracleManager,
-                relayerManagerAddr
+                relayerManagerAddr,
+                proxyOracleManager
             )
         );
 
@@ -57,9 +58,9 @@ contract deployOracleScript is Script {
             address(oracleManagerImplementation),
             abi.encodeWithSelector(
                 OracleManager.initialize.selector,
-                fpAdmin,
+                deployerAddress,
                 proxyBlsApkRegistry,
-                fpAdmin
+                deployerAddress
             )
         );
 
