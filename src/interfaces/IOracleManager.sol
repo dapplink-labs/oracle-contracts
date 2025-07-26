@@ -14,14 +14,14 @@ interface IOracleManager {
         uint256 batchId,
         uint256 totalStaking,
         bytes32 signatoryRecordHash,
-        uint256 marketPrice
+        string marketPrice
     );
 
     event OraclePodAddedToFillWhitelist(IOraclePod oralePod);
     event OraclePodRemoveToFillWhitelist(IOraclePod oralePod);
 
     struct OracleBatch {
-        uint256 symbolPrice;
+        string symbolPrice;
         bytes32 blockHash;
         uint256 blockNumber;
         bytes32 msgHash;

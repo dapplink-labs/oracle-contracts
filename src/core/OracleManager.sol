@@ -71,7 +71,7 @@ contract OracleManager is OwnableUpgradeable, OracleManagerStorage, IOracleManag
             bytes32 signatoryRecordHash
         ) = blsApkRegistry.checkSignatures(oracleBatch.msgHash, oracleBatch.blockNumber, oracleNonSignerAndSignature);
 
-        uint256 symbolPrice = oracleBatch.symbolPrice;
+        string memory symbolPrice = oracleBatch.symbolPrice;
 
         oraclePod.fillSymbolPrice(symbolPrice);
 

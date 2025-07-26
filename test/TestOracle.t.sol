@@ -38,7 +38,7 @@ contract OraclePodTest is Test {
     }
 
     function testOnlyOracleManagerCanFillSymbolPrice() public {
-        uint256 price = 1000 ether;
+        string memory price = "1000";
 
         // 非 oracleManager 调用失败
         vm.prank(other);
@@ -55,12 +55,12 @@ contract OraclePodTest is Test {
     }
 
     function testFillAndGetPrice() public {
-        uint256 price = 1234;
+        string memory price = "1234";
 
         vm.prank(oracleManager);
         pod.fillSymbolPrice(price);
 
-        uint256 got = pod.getSymbolPrice();
+        string memory got = pod.getSymbolPrice();
         assertEq(got, price);
     }
 }
@@ -260,7 +260,7 @@ contract OracleManagerTest is Test {
         IOracleManager.OracleBatch memory batch = IOracleManager.OracleBatch({
             msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
             blockNumber: block.number - 1,
-            symbolPrice: 888,
+            symbolPrice: "888",
             blockHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935
         });
 
@@ -271,7 +271,7 @@ contract OracleManagerTest is Test {
             noSignerAndSignature
         );
 
-        assertEq(oraclePod.getSymbolPrice(), 888);
+        assertEq(oraclePod.getSymbolPrice(), "888");
     }
 
     function testFillSymbolPriceWithoutWhitelistOrAuthority() public {
@@ -298,7 +298,7 @@ contract OracleManagerTest is Test {
         IOracleManager.OracleBatch memory batch = IOracleManager.OracleBatch({
             msgHash: 0x3f0a377ba0a4a460ecb616f6507ce0d8cfa3e704025d4fda3ed0c5ca05468728,
             blockNumber: block.number - 1,
-            symbolPrice: 888,
+            symbolPrice: "888",
             blockHash: 0x3f0a377ba0a4a460ecb616f6507ce0d8cfa3e704025d4fda3ed0c5ca05468728
         });
 
