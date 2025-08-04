@@ -9,4 +9,8 @@ abstract contract OraclePodStorage is IOraclePod {
     address public oracleManager;
 
     string public marketPrice;
+
+    uint256 public updateTimestamp;
+
+    uint256 public constant maxAge = 1 days;
 }
