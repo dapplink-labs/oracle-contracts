@@ -37,7 +37,6 @@ contract OracleManager is OwnableUpgradeable, OracleManagerStorage, IOracleManag
         address _aggregatorAddress
     ) external initializer {
         __Ownable_init(_initialOwner);
-        _transferOwnership(_initialOwner);
         blsApkRegistry = IBLSApkRegistry(_blsApkRegistry);
         aggregatorAddress = _aggregatorAddress;
         confirmBatchId = 0;

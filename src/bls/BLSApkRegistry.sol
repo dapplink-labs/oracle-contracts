@@ -40,7 +40,6 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         initializer
     {
         __Ownable_init(_initialOwner);
-        _transferOwnership(_initialOwner);
         whiteListAddress = _whiteListAddress;
         oracleManager = _oracleManager;
         _initializeApk();
@@ -48,17 +47,32 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
 
 
     function registerOperator(address operator) public onlyOracleManager {
+        require(operator != address(0), "BLSApkRegistry.registerBLSPublicKey: Operator is zero address");
+
+        require(!operatorIsRegister[operator], "BLSApkRegistry.registerBLSPublicKey: Operator have already register");
+
         (BN254.G1Point memory pubkey,) = getRegisteredPubkey(operator);
 
         _processApkUpdate(pubkey);
+
+        totalNodes += 1;
+
+        operatorIsRegister[operator] = true;
 
         emit OperatorAdded(operator, operatorToPubkeyHash[operator]);
     }
 
     function deregisterOperator(address operator) public onlyOracleManager {
+        require(operatorIsRegister[operator], "BLSApkRegistry.registerBLSPublicKey: Operator have already deregister");
+
         (BN254.G1Point memory pubkey,) = getRegisteredPubkey(operator);
 
         _processApkUpdate(pubkey.negate());
+
+        operatorIsRegister[operator] = false;
+
+        totalNodes -= 1;
+
         emit OperatorRemoved(operator, operatorToPubkeyHash[operator]);
     }
 
@@ -67,6 +81,11 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         PubkeyRegistrationParams calldata params,
         BN254.G1Point calldata pubkeyRegistrationMessageHash
     ) external returns (bytes32) {
+        require(
+            msg.sender == operator,
+            "BLSApkRegistry.registerBLSPublicKey: this caller is not operator"
+        );
+
         require(
             blsRegisterWhitelist[msg.sender],
             "BLSApkRegistry.registerBLSPublicKey: this address have not permission to register bls key"
@@ -127,6 +146,15 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         require(
             referenceBlockNumber < uint32(block.number), "BLSSignatureChecker.checkSignatures: invalid reference block"
         );
+
+        uint256 nonSingerNode = params.nonSignerPubkeys.length;
+        uint256 thresholdNodes = (totalNodes * 2) / 3;
+
+        require(
+            totalNodes - nonSingerNode >= thresholdNodes,
+            "BLSSignatureChecker.checkSignatures: sign node less than threshold node"
+        );
+
         BN254.G1Point memory signerApk = BN254.G1Point(0, 0);
         bytes32[] memory nonSignersPubkeyHashes;
         if (params.nonSignerPubkeys.length > 0) {
