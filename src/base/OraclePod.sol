@@ -38,4 +38,9 @@ contract OraclePod is Initializable, OwnableUpgradeable, OraclePodStorage {
     function getSymbolPrice() external view returns (string memory) {
         return marketPrice;
     }
+
+    function setOracleManager(address _oracleManager) external onlyOwner {
+        oracleManager = _oracleManager;
+        emit OracleManagerUpdate(oracleManager, _oracleManager);
+    }
 }
