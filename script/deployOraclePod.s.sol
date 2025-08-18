@@ -31,7 +31,7 @@ contract deployOraclePodScript is Script {
         TransparentUpgradeableProxy proxyOraclePod = new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         oraclePod = OraclePod(address(proxyOraclePod));
         oraclePodImplementation = new OraclePod();
-         oraclePodAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyOraclePod)));
+        oraclePodAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyOraclePod)));
 
         console.log("oraclePodImplementation===", address(oraclePodImplementation));
 
