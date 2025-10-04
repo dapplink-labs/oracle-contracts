@@ -6,10 +6,6 @@ parent:
 -->
 
 <div align="center">
-  <h1> oracle-contracts repo </h1>
-</div>
-
-<div align="center">
   <a href="https://github.com/dapplink-labs/oracle-contracts/releases/latest">
     <img alt="Version" src="https://img.shields.io/github/tag/dapplink-labs/oracle-contracts.svg" />
   </a>
