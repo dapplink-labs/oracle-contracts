@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "../src/base/OraclePod.sol";
+import "../src/pod/OraclePod.sol";
 import "../src/bls/BLSApkRegistry.sol";
 import "../src/core/OracleManager.sol";
 import "../src/interfaces/IBLSApkRegistry.sol";
