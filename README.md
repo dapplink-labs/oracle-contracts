@@ -55,6 +55,8 @@ $ forge snapshot
 tbd
 
 ## 2.Submit Bugs
+tbd
 
 ## 3.Contribute
+tbd
 

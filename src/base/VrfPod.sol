@@ -37,7 +37,7 @@ contract VrfPod is Initializable, OwnableUpgradeable, VrfPodStorage{
         emit FillRandomWords(_requestId, _randomWords);
     }
 
-    function getRequestStatus(uint256 _requestId) external view returns (bool fulfilled, uint256[] memory randomWords){
+    function getRandomWordsWithStatus(uint256 _requestId) external view returns (bool fulfilled, uint256[] memory randomWords){
         return (randomWordsMapping[_requestId].fulfilled, randomWordsMapping[_requestId].randomWords);
     }
 
