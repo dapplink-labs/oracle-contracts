@@ -1,13 +1,31 @@
+# DappLink Oracle Contracts
+
 <!--
 parent:
   order: false
 -->
 
 <div align="center">
-  <h1> oracle-contracts</h1>
+  <h1> oracle-contracts repo </h1>
 </div>
 
-## 2.Usage
+<div align="center">
+  <a href="https://github.com/dapplink-labs/oracle-contracts/releases/latest">
+    <img alt="Version" src="https://img.shields.io/github/tag/dapplink-labs/oracle-contracts.svg" />
+  </a>
+  <a href="https://github.com/dapplink-labs/oracle-contracts/blob/main/LICENSE">
+    <img alt="License: Apache-2.0" src="https://img.shields.io/github/license/dapplink-labs/oracle-contracts.svg" />
+  </a>
+  <a href="https://pkg.go.dev/github.com/dapplink-labs/oracle-contracts">
+    <img alt="GoDoc" src="https://godoc.org/github.com/dapplink-labs/oracle-contracts?status.svg" />
+  </a>
+</div>
+
+DappLink Oracle Contracts are the core smart contracts that power DappLink’s decentralized oracle network.
+They aggregate, verify, and deliver off-chain data — such as price feeds, randomness, and external API results — onto blockchain networks with cryptographic proofs to ensure integrity and transparency.
+
+
+## 1.Usage
 
 ### Install Dependencies
 
@@ -42,4 +60,8 @@ $ forge snapshot
 ### Deploy
 
 tbd
+
+## 2.Submit Bugs
+
+## 3.Contribute
 
