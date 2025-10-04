@@ -16,9 +16,6 @@ parent:
   <a href="https://github.com/dapplink-labs/oracle-contracts/blob/main/LICENSE">
     <img alt="License: Apache-2.0" src="https://img.shields.io/github/license/dapplink-labs/oracle-contracts.svg" />
   </a>
-  <a href="https://pkg.go.dev/github.com/dapplink-labs/oracle-contracts">
-    <img alt="Solidity Docs" src="https://docs.soliditylang.org/github.com/dapplink-labs/oracle-contracts?status.svg" />
-  </a>
 </div>
 
 DappLink Oracle Contracts are the core smart contracts that power DappLink’s decentralized oracle network.
