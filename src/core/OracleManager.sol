@@ -9,24 +9,9 @@ import "../interfaces/IBLSApkRegistry.sol";
 import "../interfaces/IOraclePod.sol";
 
 import "./OracleManagerStorage.sol";
+import "./PodManager.sol";
 
-contract OracleManager is OwnableUpgradeable, OracleManagerStorage, IOracleManager {
-    modifier onlyAggregatorManager() {
-        require(
-            msg.sender == aggregatorAddress,
-            "OracleManager.onlyOracleWhiteListManager: not the aggregator address"
-        );
-        _;
-    }
-
-    modifier onlyPodWhitelistedForFill(IOraclePod oraclePod) {
-        require(
-            podIsWhitelistedForFill[oraclePod],
-            "OracleManager.onlyPodWhitelistedForFill: oraclePod not whitelisted"
-        );
-        _;
-    }
-
+contract OracleManager is OwnableUpgradeable, PodManager, OracleManagerStorage, IOracleManager {
     constructor() {
         _disableInitializers();
     }
@@ -37,34 +22,15 @@ contract OracleManager is OwnableUpgradeable, OracleManagerStorage, IOracleManag
         address _aggregatorAddress
     ) external initializer {
         __Ownable_init(_initialOwner);
-        blsApkRegistry = IBLSApkRegistry(_blsApkRegistry);
-        aggregatorAddress = _aggregatorAddress;
+        __PodManager_init(_blsApkRegistry, _aggregatorAddress);
         confirmBatchId = 0;
-    }
-
-    function registerOperator(string calldata nodeUrl) external {
-        require(
-            operatorWhitelist[msg.sender],
-            "OracleManager.registerOperator: this address have not permission to register "
-        );
-        blsApkRegistry.registerOperator(msg.sender);
-        emit OperatorRegistered(msg.sender, nodeUrl);
-    }
-
-    function deRegisterOperator() external {
-        require(
-            operatorWhitelist[msg.sender],
-            "OracleManager.registerOperator: this address have not permission to register "
-        );
-        blsApkRegistry.deregisterOperator(msg.sender);
-        emit OperatorDeRegistered(msg.sender);
     }
 
     function fillSymbolPriceWithSignature(
         IOraclePod oraclePod,
         OracleBatch calldata oracleBatch,
         IBLSApkRegistry.OracleNonSignerAndSignature memory oracleNonSignerAndSignature
-    ) external onlyAggregatorManager onlyPodWhitelistedForFill(oraclePod) {
+    ) external onlyAggregatorManager onlyPodWhitelistedForFill(address(oraclePod)) {
         (
             uint256 totalStaking,
             bytes32 signatoryRecordHash
@@ -75,31 +41,5 @@ contract OracleManager is OwnableUpgradeable, OracleManagerStorage, IOracleManag
         oraclePod.fillSymbolPrice(symbolPrice);
 
         emit VerifyOracleSig(confirmBatchId++, totalStaking, signatoryRecordHash, symbolPrice);
-    }
-
-    function addOrRemoveOperatorWhitelist(address operator, bool isAdd) external onlyAggregatorManager {
-        require(
-            operator != address (0),
-            "OracleManager.addOperatorWhitelist: operator address is zero"
-        );
-        operatorWhitelist[operator] = isAdd;
-    }
-
-    function setAggregatorAddress(address _aggregatorAddress) external onlyOwner {
-        require(
-            _aggregatorAddress != address (0),
-            "OracleManager.addAggregator: aggregatorAddress address is zero"
-        );
-        aggregatorAddress = _aggregatorAddress;
-    }
-
-    function addOraclePodToFillWhitelist(IOraclePod oraclePod) external onlyAggregatorManager {
-        podIsWhitelistedForFill[oraclePod] = true;
-        emit OraclePodAddedToFillWhitelist(oraclePod);
-    }
-
-    function removeOraclePodToFillWhitelist(IOraclePod oraclePod) external onlyAggregatorManager {
-        podIsWhitelistedForFill[oraclePod] = false;
-        emit OraclePodRemoveToFillWhitelist(oraclePod);
     }
 }

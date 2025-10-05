@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 
 import { EmptyContract } from "../src/utils/EmptyContract.sol";
 import { OraclePod } from "../src/pod/OraclePod.sol";
+import { OracleManager } from "../src/core/OracleManager.sol";
+
 import { IOracleManager } from "../src/interfaces/IOracleManager.sol";
 import { IOraclePod } from "../src/interfaces/IOraclePod.sol";
 
@@ -45,7 +47,7 @@ contract deployOraclePodScript is Script {
             )
         );
 
-        IOracleManager(oracleManagerAddr).addOraclePodToFillWhitelist(IOraclePod(address(proxyOraclePod)));
+//        OracleManager(oracleManagerAddr).addOraclePodToFillWhitelist(proxyOraclePod);
 
 
         console.log("deploy proxyOraclePod:", address(proxyOraclePod));

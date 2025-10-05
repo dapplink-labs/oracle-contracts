@@ -9,10 +9,5 @@ import "../interfaces/IVrfManager.sol";
 
 
 abstract contract VrfManagerStorage is Initializable, IVrfManager{
-    IBLSApkRegistry public blsApkRegistry;
 
-    address public aggregatorAddress;
-
-    mapping(IVrfPod => bool) public podIsWhitelistedForFill;
-    mapping(address => bool) public operatorWhitelist;
 }

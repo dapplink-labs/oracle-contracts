@@ -49,7 +49,7 @@ contract deployOracleScript is Script {
                 BLSApkRegistry.initialize.selector,
                 deployerAddress,
                 relayerManagerAddr,
-                proxyOracleManager
+                address(proxyOracleManager)
             )
         );
 

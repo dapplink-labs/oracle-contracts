@@ -8,12 +8,5 @@ import "../interfaces/IOraclePod.sol";
 
 
 abstract contract OracleManagerStorage is Initializable {
-    IBLSApkRegistry public blsApkRegistry;
-
     uint256 public confirmBatchId;
-
-    address public aggregatorAddress;
-
-    mapping(IOraclePod => bool) public podIsWhitelistedForFill;
-    mapping(address => bool) public operatorWhitelist;
 }
