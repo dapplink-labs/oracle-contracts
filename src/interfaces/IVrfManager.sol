@@ -6,14 +6,9 @@ import "./IBLSApkRegistry.sol";
 import {IVrfPod} from "./IVrfPod.sol";
 
 interface IVrfManager {
-    event VerifyVrfSig(
-        uint256 requestId,
-        uint256 totalStaking,
-        bytes32 signatoryRecordHash,
-        uint256[] _randomWords
-    );
+    event VerifyVrfSig(uint256 requestId, uint256 totalStaking, bytes32 signatoryRecordHash, uint256[] _randomWords);
 
-    struct VrfRandomWords{
+    struct VrfRandomWords {
         uint256 requestId;
         uint256[] _randomWords;
         bytes32 blockHash;
@@ -24,6 +19,6 @@ interface IVrfManager {
     function fillRandWordsWithSignature(
         IVrfPod vrfPod,
         VrfRandomWords calldata vrfRandomWords,
-        IBLSApkRegistry.OracleNonSignerAndSignature memory oracleNonSignerAndSignature
+        IBLSApkRegistry.NonSignerAndSignature memory oracleNonSignerAndSignature
     ) external;
 }

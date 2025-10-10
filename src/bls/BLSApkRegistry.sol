@@ -17,10 +17,7 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
     uint256 internal constant PAIRING_EQUALITY_CHECK_GAS = 120000;
 
     modifier onlyWhiteListManager() {
-        require(
-            msg.sender == whiteListAddress,
-            "BLSApkRegistry.onlyWhiteListManager: caller is not white list address"
-        );
+        require(msg.sender == whiteListAddress, "BLSApkRegistry.onlyWhiteListManager: caller is not white list address");
         _;
     }
 
@@ -44,7 +41,6 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         oracleManager = _oracleManager;
         _initializeApk();
     }
-
 
     function registerOperator(address operator) public onlyOracleManager {
         require(operator != address(0), "BLSApkRegistry.registerBLSPublicKey: Operator is zero address");
@@ -81,10 +77,7 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         PubkeyRegistrationParams calldata params,
         BN254.G1Point calldata pubkeyRegistrationMessageHash
     ) external returns (bytes32) {
-        require(
-            msg.sender == operator,
-            "BLSApkRegistry.registerBLSPublicKey: this caller is not operator"
-        );
+        require(msg.sender == operator, "BLSApkRegistry.registerBLSPublicKey: this caller is not operator");
 
         require(
             blsRegisterWhitelist[msg.sender],
@@ -138,7 +131,7 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         return pubkeyHash;
     }
 
-    function checkSignatures(bytes32 msgHash, uint256 referenceBlockNumber, OracleNonSignerAndSignature memory params)
+    function checkSignatures(bytes32 msgHash, uint256 referenceBlockNumber, NonSignerAndSignature memory params)
         public
         view
         returns (uint256, bytes32)

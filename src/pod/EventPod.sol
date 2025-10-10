@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-
 import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
 
-import { EventPodStorage } from "./EventPodStorage.sol";
+import {EventPodStorage} from "./EventPodStorage.sol";
 
 contract EventPod is Initializable, OwnableUpgradeable, EventPodStorage {
     constructor() {
@@ -13,9 +12,7 @@ contract EventPod is Initializable, OwnableUpgradeable, EventPodStorage {
     }
 
     modifier onlyEventManager() {
-        require (
-            msg.sender == eventManager, "EventPod.onlyEventManager: caller is not the oracle manager address"
-        );
+        require(msg.sender == eventManager, "EventPod.onlyEventManager: caller is not the event manager address");
         _;
     }
 
@@ -24,21 +21,20 @@ contract EventPod is Initializable, OwnableUpgradeable, EventPodStorage {
         eventManager = _eventManager;
     }
 
-    function createEvent(uint256 _requestId, string memory _eventDescribe, string memory _predictPosSide, string memory _predictNegSide) external {
+    function createEvent(
+        uint256 _requestId,
+        string memory _eventDescribe,
+        string memory _predictPosSide,
+        string memory _predictNegSide
+    ) external {
         predictEventMapping[_requestId] = PredictEventInfo({
-            requestId:  _requestId,
+            requestId: _requestId,
             eventDescribe: _eventDescribe,
             predictPosSide: _predictPosSide,
             predictNegSide: _predictNegSide,
             winner: "unknown"
         });
-        emit CreatePredictEvent(
-            _requestId,
-            _eventDescribe,
-            _predictPosSide,
-            _predictNegSide,
-            address(this)
-        );
+        emit CreatePredictEvent(_requestId, _eventDescribe, _predictPosSide, _predictNegSide, address(this));
     }
 
     function submitEventResult(uint256 _requestId, string memory _winner) external onlyEventManager {
@@ -51,7 +47,11 @@ contract EventPod is Initializable, OwnableUpgradeable, EventPodStorage {
         );
     }
 
-    function fetchEventResult(uint256 requestId) external view returns (string memory predictPosSide, string memory predictNegSid, string memory winner) {
+    function fetchEventResult(uint256 requestId)
+        external
+        view
+        returns (string memory predictPosSide, string memory predictNegSid, string memory winner)
+    {
         return (
             predictEventMapping[requestId].predictPosSide,
             predictEventMapping[requestId].predictNegSide,
@@ -59,7 +59,7 @@ contract EventPod is Initializable, OwnableUpgradeable, EventPodStorage {
         );
     }
 
-    function setEventManager(address _eventManager) external {
+    function setEventManager(address _eventManager) external onlyOwner {
         eventManager = _eventManager;
     }
 }

@@ -11,17 +11,15 @@ import "../interfaces/IEventPod.sol";
 import "./EventManagerStorage.sol";
 import "./PodManager.sol";
 
-
 contract EventManager is OwnableUpgradeable, PodManager, EventManagerStorage {
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(
-        address _initialOwner,
-        address _blsApkRegistry,
-        address _aggregatorAddress
-    ) external initializer {
+    function initialize(address _initialOwner, address _blsApkRegistry, address _aggregatorAddress)
+        external
+        initializer
+    {
         __Ownable_init(_initialOwner);
         __PodManager_init(_blsApkRegistry, _aggregatorAddress);
     }
@@ -29,12 +27,11 @@ contract EventManager is OwnableUpgradeable, PodManager, EventManagerStorage {
     function fillEventResultWithSignature(
         IEventPod eventPod,
         PredictEvents calldata predictEvents,
-        IBLSApkRegistry.OracleNonSignerAndSignature memory oracleNonSignerAndSignature
+        IBLSApkRegistry.NonSignerAndSignature memory oracleNonSignerAndSignature
     ) external onlyAggregatorManager onlyPodWhitelistedForFill(address(eventPod)) {
-        (
-            uint256 totalStaking,
-            bytes32 signatoryRecordHash
-        ) = blsApkRegistry.checkSignatures(predictEvents.msgHash, predictEvents.blockNumber, oracleNonSignerAndSignature);
+        (uint256 totalStaking, bytes32 signatoryRecordHash) = blsApkRegistry.checkSignatures(
+            predictEvents.msgHash, predictEvents.blockNumber, oracleNonSignerAndSignature
+        );
 
         string memory winner = predictEvents.winner;
 

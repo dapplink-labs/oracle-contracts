@@ -6,12 +6,7 @@ import "./IBLSApkRegistry.sol";
 import {IOraclePod} from "./IOraclePod.sol";
 
 interface IOracleManager {
-    event VerifyOracleSig(
-        uint256 batchId,
-        uint256 totalStaking,
-        bytes32 signatoryRecordHash,
-        string marketPrice
-    );
+    event VerifyOracleSig(uint256 batchId, uint256 totalStaking, bytes32 signatoryRecordHash, string marketPrice);
 
     struct OracleBatch {
         string symbolPrice;
@@ -23,6 +18,6 @@ interface IOracleManager {
     function fillSymbolPriceWithSignature(
         IOraclePod oraclePod,
         OracleBatch calldata oracleBatch,
-        IBLSApkRegistry.OracleNonSignerAndSignature memory oracleNonSignerAndSignature
+        IBLSApkRegistry.NonSignerAndSignature memory oracleNonSignerAndSignature
     ) external;
 }

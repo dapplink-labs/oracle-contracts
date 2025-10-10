@@ -5,7 +5,4 @@ import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
 
 import "../interfaces/IEventManager.sol";
 
-
-abstract contract EventManagerStorage is Initializable, IEventManager{
-
-}
+abstract contract EventManagerStorage is Initializable, IEventManager {}
