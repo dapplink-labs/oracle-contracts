@@ -11,7 +11,6 @@ import "../interfaces/IEventPod.sol";
 import "./EventManagerStorage.sol";
 import "./PodManager.sol";
 
-
 contract EventManager is OwnableUpgradeable, PodManager, EventManagerStorage {
     constructor() {
         _disableInitializers();
@@ -29,17 +28,31 @@ contract EventManager is OwnableUpgradeable, PodManager, EventManagerStorage {
     function fillEventResultWithSignature(
         IEventPod eventPod,
         PredictEvents calldata predictEvents,
-        IBLSApkRegistry.OracleNonSignerAndSignature memory oracleNonSignerAndSignature
-    ) external onlyAggregatorManager onlyPodWhitelistedForFill(address(eventPod)) {
-        (
-            uint256 totalStaking,
-            bytes32 signatoryRecordHash
-        ) = blsApkRegistry.checkSignatures(predictEvents.msgHash, predictEvents.blockNumber, oracleNonSignerAndSignature);
+        IBLSApkRegistry.NonSignerAndSignature memory oracleNonSignerAndSignature
+    )
+        external
+        onlyAggregatorManager
+        onlyPodWhitelistedForFill(address(eventPod))
+    {
+        (uint256 totalStaking, bytes32 signatoryRecordHash) = blsApkRegistry
+            .checkSignatures(
+                predictEvents.msgHash,
+                predictEvents.blockNumber,
+                oracleNonSignerAndSignature
+            );
 
         string memory winner = predictEvents.winner;
 
-        eventPod.submitEventResult(predictEvents.requestId, predictEvents.winner);
+        eventPod.submitEventResult(
+            predictEvents.requestId,
+            predictEvents.winner
+        );
 
-        emit VerifyPredictEventSig(predictEvents.requestId, totalStaking, signatoryRecordHash, winner);
+        emit VerifyPredictEventSig(
+            predictEvents.requestId,
+            totalStaking,
+            signatoryRecordHash,
+            winner
+        );
     }
 }

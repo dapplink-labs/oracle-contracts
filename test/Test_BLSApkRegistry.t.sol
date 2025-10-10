@@ -81,12 +81,12 @@ contract BLSApkRegistryTest is Test {
         // 测试注册新的 pubkey 是否成功
         vm.prank(blsRegister);
         bytes32 pubkeyHash = registry.registerBLSPublicKey(
-            address(0xBEE),
+            blsRegister,
             params,
             msgHash
         );
 
-        bytes32 readHash = registry.getPubkeyHash(address(0xBEE));
+        bytes32 readHash = registry.getPubkeyHash(blsRegister);
         assertEq(pubkeyHash, readHash);
 
         // 测试同一个 operator 不能重复注册 pubkey
@@ -94,7 +94,7 @@ contract BLSApkRegistryTest is Test {
         vm.expectRevert(
             "BLSApkRegistry.registerBLSPublicKey: operator already registered pubkey"
         );
-        registry.registerBLSPublicKey(address(0xBEE), params, msgHash);
+        registry.registerBLSPublicKey(blsRegister, params, msgHash);
     }
 
     function testCannotRegisterWithZeroPubkey() public {
@@ -117,7 +117,13 @@ contract BLSApkRegistryTest is Test {
         vm.expectRevert(
             "BLSApkRegistry.registerBLSPublicKey: cannot register zero pubkey"
         );
-        registry.registerBLSPublicKey(address(0xC0DE), params, dummyMsgHash);
+        registry.registerBLSPublicKey(blsRegister, params, dummyMsgHash);
+
+        vm.prank(blsRegister);
+        vm.expectRevert(
+            "BLSApkRegistry.registerBLSPublicKey: this caller is not operator"
+        );
+        registry.registerBLSPublicKey(address(0xEdc), params, dummyMsgHash);
     }
 
     function testOnlyOracleManagerCanRegisterAndDeregister() public {
@@ -129,11 +135,11 @@ contract BLSApkRegistryTest is Test {
         vm.expectRevert(
             "BLSApkRegistry.onlyOracleManager: caller is not the oracle manager address"
         );
-        registry.registerOperator(address(0xBEE));
+        registry.registerOperator(blsRegister);
 
         // 正常调用
         vm.prank(oracleManager);
-        registry.registerOperator(address(0xBEE));
+        registry.registerOperator(blsRegister);
 
         // 非 oracleManager 调用 deregisterOperator
         vm.prank(address(0x111));
@@ -144,7 +150,7 @@ contract BLSApkRegistryTest is Test {
 
         // 正常调用
         vm.prank(oracleManager);
-        registry.deregisterOperator(address(0xBEE));
+        registry.deregisterOperator(blsRegister);
     }
 
     function testGetPubkeyRegMessageHash() public view {
@@ -178,9 +184,15 @@ contract BLSApkRegistryTest is Test {
 
         vm.prank(tester);
         vm.expectRevert(
-            "BLSApkRegistry.registerBLSPublicKey: this address have not permission to register bls key"
+            "BLSApkRegistry.registerBLSPublicKey: this caller is not operator"
         );
         registry.registerBLSPublicKey(address(0xDDD), params, dummy);
+
+        vm.prank(tester);
+        vm.expectRevert(
+            "BLSApkRegistry.registerBLSPublicKey: this address have not permission to register bls key"
+        );
+        registry.registerBLSPublicKey(tester, params, dummy);
     }
 
     function testTrySignatureAndApkVerification() public view {
@@ -256,15 +268,26 @@ contract BLSApkRegistryTest is Test {
                 pubkeyRegistrationSignature: signature
             });
 
-        // 测试注册新的 pubkey 是否成功
-        vm.prank(blsRegister);
-        bytes32 pubkeyHash = registry.registerBLSPublicKey(
-            address(0xBEE),
+        // 测试白名单限制
+        vm.prank(address(0xA5));
+        vm.expectRevert(
+            "BLSApkRegistry.registerBLSPublicKey: this address have not permission to register bls key"
+        );
+        bytes32 pubkeyHash1 = registry.registerBLSPublicKey(
+            address(0xA5),
             params,
             msgHash
         );
 
-        bytes32 readHash = registry.getPubkeyHash(address(0xBEE));
+        // 测试注册新的 pubkey 是否成功
+        vm.prank(blsRegister);
+        bytes32 pubkeyHash = registry.registerBLSPublicKey(
+            blsRegister,
+            params,
+            msgHash
+        );
+
+        bytes32 readHash = registry.getPubkeyHash(blsRegister);
         assertEq(pubkeyHash, readHash);
 
         // 测试同一个 operator 不能重复注册 pubkey
@@ -272,6 +295,6 @@ contract BLSApkRegistryTest is Test {
         vm.expectRevert(
             "BLSApkRegistry.registerBLSPublicKey: operator already registered pubkey"
         );
-        registry.registerBLSPublicKey(address(0xBEE), params, msgHash);
+        registry.registerBLSPublicKey(blsRegister, params, msgHash);
     }
 }

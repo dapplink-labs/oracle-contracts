@@ -2,110 +2,94 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "../src/pod/OraclePod.sol";
+import "../src/pod/VrfPod.sol";
 import "../src/bls/BLSApkRegistry.sol";
-import "../src/core/OracleManager.sol";
+import "../src/core/VrfManager.sol";
 import "../src/interfaces/IBLSApkRegistry.sol";
-import "../src/interfaces/IOracleManager.sol";
+import "../src/interfaces/IVrfManager.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract OraclePodTest is Test {
-    OraclePod logic;
-    OraclePod pod;
+contract VrfPodTest is Test {
+    VrfPod logic;
+    VrfPod pod;
 
     address deployer = address(0xA1);
-    address oracleManager = address(0xB1);
+    address vrfManager = address(0xB1);
     address other = address(0xC1);
+
+    uint256 requestId = 1;
+    uint256[] randomWords = [uint256(123), uint256(456), uint256(789)];
 
     function setUp() public {
         vm.prank(deployer);
-        logic = new OraclePod();
+        logic = new VrfPod();
 
         bytes memory initData = abi.encodeWithSelector(
-            OraclePod.initialize.selector,
+            VrfPod.initialize.selector,
             deployer,
-            oracleManager
+            vrfManager
         );
 
         vm.prank(deployer);
         ERC1967Proxy proxy = new ERC1967Proxy(address(logic), initData);
-        pod = OraclePod(address(proxy));
+        pod = VrfPod(address(proxy));
     }
 
-    function testInitializeSetsOwnerAndOracleManager() public view {
+    function testInitializeSetsOwnerAndVrfManager() public view {
         assertEq(pod.owner(), deployer);
-        assertEq(pod.oracleManager(), oracleManager);
+        assertEq(pod.vrfManager(), vrfManager);
     }
 
-    function testOnlyOracleManagerCanFillSymbolPrice() public {
-        string memory price = "1000";
-
-        // 非 oracleManager 调用失败
+    function testOnlyVrfManagerCanFulfillRandomWords() public {
+        // 非 VrfManager 调用失败
         vm.prank(other);
-        vm.expectRevert(
-            "OraclePod.onlyOracleManager: caller is not the oracle manager address"
+        vm.expectRevert("DappLinkVRF.onlyVrfManager can call this function");
+        pod.fulfillRandomWords(requestId, randomWords);
+
+        // VrfManager 调用成功
+        vm.prank(vrfManager);
+        pod.fulfillRandomWords(requestId, randomWords);
+
+        (bool fulfilled, uint256[] memory words) = pod.getRandomWordsWithStatus(
+            requestId
         );
-        pod.fillSymbolPrice(price);
 
-        // oracleManager 调用成功
-        vm.prank(oracleManager);
-        pod.fillSymbolPrice(price);
-
-        assertEq(pod.getSymbolPrice(), price);
+        assertEq(fulfilled, true);
+        assertEq(words, randomWords);
     }
 
-    function testFillAndGetPrice() public {
-        string memory price = "1234";
-
-        vm.prank(address(0xE5));
+    function testOnlyOwnerCanSetVrfManager() public {
+        vm.prank(vrfManager);
         vm.expectRevert(
-            "OraclePod.onlyOracleManager: caller is not the oracle manager address"
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                vrfManager
+            )
         );
-        pod.fillSymbolPrice(price);
+        pod.setVrfManager(address(0xD1));
 
-        vm.prank(oracleManager);
-        pod.fillSymbolPrice(price);
-
-        string memory got = pod.getSymbolPrice();
-        assertEq(got, price);
-    }
-
-    function testIsDataFresh() public {
-        string memory price = "5678";
-
-        vm.prank(oracleManager);
-        pod.fillSymbolPrice(price);
-
-        // 立即检查，数据应为新鲜
-        bool fresh = pod.isDataFresh(10);
-        assertTrue(fresh);
-
-        // 增加时间超过阈值，数据应不新鲜
-        vm.warp(block.timestamp + 20);
-        fresh = pod.isDataFresh(10);
-        assertTrue(!fresh);
-    }
-
-    function testOnlyOwnerCanSetOracleManager() public {
-        address newManager = address(0xD1);
-
-        // 非 owner 调用失败
-        vm.prank(other);
-        vm.expectRevert();
-        pod.setOracleManager(newManager);
-
-        // owner 调用成功
         vm.prank(deployer);
-        pod.setOracleManager(newManager);
+        pod.setVrfManager(address(0xD1));
+        assertEq(pod.vrfManager(), address(0xD1));
+    }
 
-        assertEq(pod.oracleManager(), newManager);
+    function testRequestRandomWords() public {
+        pod.requestRandomWords(requestId, 3);
+
+        (bool fulfilled, uint256[] memory words) = pod.getRandomWordsWithStatus(
+            requestId
+        );
+
+        assertEq(fulfilled, false);
+        assertEq(words.length, 0);
     }
 }
 
-contract OracleManagerTest is Test {
-    OracleManager oracleManager;
+contract VrfManagerTest is Test {
+    VrfManager vrfManager;
     BLSApkRegistry blsRegistry;
-    OraclePod oraclePod;
+    VrfPod vrfPod;
 
     address owner = address(0xA1);
     address aggregator = address(0xA2);
@@ -115,9 +99,9 @@ contract OracleManagerTest is Test {
 
     function setUp() public {
         // 部署逻辑合约
-        OracleManager os_logic = new OracleManager();
+        VrfManager os_logic = new VrfManager();
         BLSApkRegistry bls_logic = new BLSApkRegistry();
-        OraclePod op_logic = new OraclePod();
+        VrfPod op_logic = new VrfPod();
 
         // 部署代理合约
         ERC1967Proxy os_proxy = new ERC1967Proxy(address(os_logic), "");
@@ -125,17 +109,17 @@ contract OracleManagerTest is Test {
         ERC1967Proxy bls_proxy = new ERC1967Proxy(address(bls_logic), "");
 
         // 转换代理合约的接口
-        oracleManager = OracleManager(address(os_proxy));
+        vrfManager = VrfManager(address(os_proxy));
         blsRegistry = BLSApkRegistry(address(bls_proxy));
-        oraclePod = OraclePod(address(op_proxy));
+        vrfPod = VrfPod(address(op_proxy));
 
         // 初始化合约
         vm.prank(owner);
-        oracleManager.initialize(owner, address(blsRegistry), aggregator);
+        vrfManager.initialize(owner, address(blsRegistry), aggregator);
         vm.prank(owner);
-        blsRegistry.initialize(owner, whiteListManager, address(oracleManager));
+        blsRegistry.initialize(owner, whiteListManager, address(vrfManager));
         vm.prank(owner);
-        oraclePod.initialize(owner, address(oracleManager));
+        vrfPod.initialize(owner, address(vrfManager));
 
         // 添加 operator 到白名单
         vm.prank(whiteListManager);
@@ -183,7 +167,7 @@ contract OracleManagerTest is Test {
             msgHash
         );
 
-        vm.prank(address(oracleManager));
+        vm.prank(address(vrfManager));
         blsRegistry.registerOperator(address(operator));
     }
 
@@ -192,90 +176,90 @@ contract OracleManagerTest is Test {
         vm.expectRevert(
             "PodManager.onlyAggregatorManager: not the aggregator address"
         );
-        oracleManager.addOrRemoveOperatorWhitelist(operator, true);
+        vrfManager.addOrRemoveOperatorWhitelist(operator, true);
 
         vm.prank(aggregator);
-        oracleManager.addOrRemoveOperatorWhitelist(operator, true);
+        vrfManager.addOrRemoveOperatorWhitelist(operator, true);
 
         vm.prank(aggregator);
         vm.expectRevert(
             "PodManager.addOperatorWhitelist: operator address is zero"
         );
-        oracleManager.addOrRemoveOperatorWhitelist(address(0), true);
+        vrfManager.addOrRemoveOperatorWhitelist(address(0), true);
     }
 
     function test_setAggregatorAddress() public {
         vm.prank(address(0xE5));
         vm.expectRevert();
-        oracleManager.setAggregatorAddress(aggregator);
+        vrfManager.setAggregatorAddress(aggregator);
 
         vm.prank(owner);
-        oracleManager.setAggregatorAddress(aggregator);
+        vrfManager.setAggregatorAddress(aggregator);
 
         vm.prank(owner);
         vm.expectRevert(
             "PodManager.addAggregator: aggregatorAddress address is zero"
         );
-        oracleManager.setAggregatorAddress(address(0));
+        vrfManager.setAggregatorAddress(address(0));
     }
 
-    function test_addOrRemoveOraclePodToFillWhitelist() public {
+    function test_addOrRemoveVrfPodToFillWhitelist() public {
         vm.prank(address(0xE5));
         vm.expectRevert(
             "PodManager.onlyAggregatorManager: not the aggregator address"
         );
-        oracleManager.addPodToFillWhitelist(address(oraclePod));
+        vrfManager.addPodToFillWhitelist(address(vrfPod));
 
         vm.prank(address(0xE5));
         vm.expectRevert(
             "PodManager.onlyAggregatorManager: not the aggregator address"
         );
-        oracleManager.removePodToFillWhitelist(address(oraclePod));
+        vrfManager.removePodToFillWhitelist(address(vrfPod));
 
         vm.prank(aggregator);
-        oracleManager.addPodToFillWhitelist(address(oraclePod));
+        vrfManager.addPodToFillWhitelist(address(vrfPod));
         vm.prank(aggregator);
-        oracleManager.removePodToFillWhitelist(address(oraclePod));
+        vrfManager.removePodToFillWhitelist(address(vrfPod));
     }
 
     function test_RegisterandDegisterOperator() public {
         vm.prank(aggregator);
-        oracleManager.addOrRemoveOperatorWhitelist(operator, true);
+        vrfManager.addOrRemoveOperatorWhitelist(operator, true);
 
         vm.prank(address(0xE1));
         vm.expectRevert(
             "PodManager.registerOperator: this address have not permission to register "
         );
-        oracleManager.registerOperator("http://node.url");
+        vrfManager.registerOperator("http://node.url");
 
         vm.prank(operator);
         vm.expectRevert(
             "BLSApkRegistry.registerBLSPublicKey: Operator have already register"
         );
-        oracleManager.registerOperator("http://node.url");
+        vrfManager.registerOperator("http://node.url");
 
         vm.prank(address(0xE1));
         vm.expectRevert(
             "PodManager.registerOperator: this address have not permission to register "
         );
-        oracleManager.deRegisterOperator();
+        vrfManager.deRegisterOperator();
 
         vm.prank(operator);
-        oracleManager.deRegisterOperator();
+        vrfManager.deRegisterOperator();
 
         vm.prank(aggregator);
-        oracleManager.addOrRemoveOperatorWhitelist(operator, false);
+        vrfManager.addOrRemoveOperatorWhitelist(operator, false);
 
         vm.prank(operator);
         vm.expectRevert(
             "PodManager.registerOperator: this address have not permission to register "
         );
-        oracleManager.registerOperator("http://node.url");
+        vrfManager.registerOperator("http://node.url");
     }
 
-    function testFillSymbolPriceWithSignature() public {
+    function testFillRandWordsWithSignature() public {
         vm.prank(aggregator);
-        oracleManager.addPodToFillWhitelist(address(oraclePod));
+        vrfManager.addPodToFillWhitelist(address(vrfPod));
 
         IBLSApkRegistry.NonSignerAndSignature
             memory noSignerAndSignature = IBLSApkRegistry
@@ -297,21 +281,29 @@ contract OracleManagerTest is Test {
                     }),
                     totalStake: 888
                 });
-        IOracleManager.OracleBatch memory batch = IOracleManager.OracleBatch({
-            msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
-            blockNumber: block.number - 1,
-            symbolPrice: "888",
-            blockHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935
-        });
+
+        uint256[] memory arr = new uint256[](1);
+        arr[0] = 43;
+        IVrfManager.VrfRandomWords memory randomWords = IVrfManager
+            .VrfRandomWords({
+                msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
+                blockNumber: block.number - 1,
+                requestId: 888,
+                blockHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
+                _randomWords: arr
+            });
 
         vm.prank(aggregator);
-        oracleManager.fillSymbolPriceWithSignature(
-            oraclePod,
-            batch,
+        vrfManager.fillRandWordsWithSignature(
+            vrfPod,
+            randomWords,
             noSignerAndSignature
         );
+        (bool fulfilled, uint256[] memory words) = vrfPod
+            .getRandomWordsWithStatus(888);
 
-        assertEq(oraclePod.getSymbolPrice(), "888");
+        assertEq(fulfilled, true);
+        assertEq(words, arr);
     }
 
     function testFillSymbolPriceWithoutWhitelistOrAuthority() public {
@@ -335,20 +327,25 @@ contract OracleManagerTest is Test {
                     }),
                     totalStake: 888
                 });
-        IOracleManager.OracleBatch memory batch = IOracleManager.OracleBatch({
-            msgHash: 0x3f0a377ba0a4a460ecb616f6507ce0d8cfa3e704025d4fda3ed0c5ca05468728,
-            blockNumber: block.number - 1,
-            symbolPrice: "888",
-            blockHash: 0x3f0a377ba0a4a460ecb616f6507ce0d8cfa3e704025d4fda3ed0c5ca05468728
-        });
+
+        uint256[] memory arr = new uint256[](1);
+        arr[0] = 43;
+        IVrfManager.VrfRandomWords memory randomWords = IVrfManager
+            .VrfRandomWords({
+                msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
+                blockNumber: block.number - 1,
+                requestId: 888,
+                blockHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
+                _randomWords: arr
+            });
 
         vm.prank(address(0xE1));
         vm.expectRevert(
             "PodManager.onlyAggregatorManager: not the aggregator address"
         );
-        oracleManager.fillSymbolPriceWithSignature(
-            oraclePod,
-            batch,
+        vrfManager.fillRandWordsWithSignature(
+            vrfPod,
+            randomWords,
             noSignerAndSignature
         );
 
@@ -356,9 +353,9 @@ contract OracleManagerTest is Test {
         vm.expectRevert(
             "PodManager.onlyPodWhitelistedForFill: pod not whitelisted"
         );
-        oracleManager.fillSymbolPriceWithSignature(
-            oraclePod,
-            batch,
+        vrfManager.fillRandWordsWithSignature(
+            vrfPod,
+            randomWords,
             noSignerAndSignature
         );
     }

@@ -6,7 +6,6 @@ import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
 
 import "../interfaces/IBLSApkRegistry.sol";
 
-
 abstract contract PodManager is Initializable, OwnableUpgradeable {
     IBLSApkRegistry public blsApkRegistry;
 
@@ -62,28 +61,35 @@ abstract contract PodManager is Initializable, OwnableUpgradeable {
         emit OperatorDeRegistered(msg.sender);
     }
 
-    function addOrRemoveOperatorWhitelist(address operator, bool isAdd) external onlyAggregatorManager {
+    function addOrRemoveOperatorWhitelist(
+        address operator,
+        bool isAdd
+    ) external onlyAggregatorManager {
         require(
-            operator != address (0),
+            operator != address(0),
             "PodManager.addOperatorWhitelist: operator address is zero"
         );
         operatorWhitelist[operator] = isAdd;
     }
 
-    function setAggregatorAddress(address _aggregatorAddress) external onlyOwner {
+    function setAggregatorAddress(
+        address _aggregatorAddress
+    ) external onlyOwner {
         require(
-            _aggregatorAddress != address (0),
+            _aggregatorAddress != address(0),
             "PodManager.addAggregator: aggregatorAddress address is zero"
         );
         aggregatorAddress = _aggregatorAddress;
     }
 
-    function addOraclePodToFillWhitelist(address pod) external onlyAggregatorManager {
+    function addPodToFillWhitelist(address pod) external onlyAggregatorManager {
         podIsWhitelistedForFill[pod] = true;
         emit PodAddedToFillWhitelist(pod);
     }
 
-    function removeOraclePodToFillWhitelist(address pod) external onlyAggregatorManager {
+    function removePodToFillWhitelist(
+        address pod
+    ) external onlyAggregatorManager {
         podIsWhitelistedForFill[pod] = false;
         emit PodRemoveToFillWhitelist(pod);
     }

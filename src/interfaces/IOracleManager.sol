@@ -23,6 +23,6 @@ interface IOracleManager {
     function fillSymbolPriceWithSignature(
         IOraclePod oraclePod,
         OracleBatch calldata oracleBatch,
-        IBLSApkRegistry.OracleNonSignerAndSignature memory oracleNonSignerAndSignature
+        IBLSApkRegistry.NonSignerAndSignature memory oracleNonSignerAndSignature
     ) external;
 }

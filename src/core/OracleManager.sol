@@ -11,7 +11,12 @@ import "../interfaces/IOraclePod.sol";
 import "./OracleManagerStorage.sol";
 import "./PodManager.sol";
 
-contract OracleManager is OwnableUpgradeable, PodManager, OracleManagerStorage, IOracleManager {
+contract OracleManager is
+    OwnableUpgradeable,
+    PodManager,
+    OracleManagerStorage,
+    IOracleManager
+{
     constructor() {
         _disableInitializers();
     }
@@ -29,17 +34,28 @@ contract OracleManager is OwnableUpgradeable, PodManager, OracleManagerStorage, 
     function fillSymbolPriceWithSignature(
         IOraclePod oraclePod,
         OracleBatch calldata oracleBatch,
-        IBLSApkRegistry.OracleNonSignerAndSignature memory oracleNonSignerAndSignature
-    ) external onlyAggregatorManager onlyPodWhitelistedForFill(address(oraclePod)) {
-        (
-            uint256 totalStaking,
-            bytes32 signatoryRecordHash
-        ) = blsApkRegistry.checkSignatures(oracleBatch.msgHash, oracleBatch.blockNumber, oracleNonSignerAndSignature);
+        IBLSApkRegistry.NonSignerAndSignature memory oracleNonSignerAndSignature
+    )
+        external
+        onlyAggregatorManager
+        onlyPodWhitelistedForFill(address(oraclePod))
+    {
+        (uint256 totalStaking, bytes32 signatoryRecordHash) = blsApkRegistry
+            .checkSignatures(
+                oracleBatch.msgHash,
+                oracleBatch.blockNumber,
+                oracleNonSignerAndSignature
+            );
 
         string memory symbolPrice = oracleBatch.symbolPrice;
 
         oraclePod.fillSymbolPrice(symbolPrice);
 
-        emit VerifyOracleSig(confirmBatchId++, totalStaking, signatoryRecordHash, symbolPrice);
+        emit VerifyOracleSig(
+            confirmBatchId++,
+            totalStaking,
+            signatoryRecordHash,
+            symbolPrice
+        );
     }
 }

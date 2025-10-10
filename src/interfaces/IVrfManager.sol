@@ -13,7 +13,7 @@ interface IVrfManager {
         uint256[] _randomWords
     );
 
-    struct VrfRandomWords{
+    struct VrfRandomWords {
         uint256 requestId;
         uint256[] _randomWords;
         bytes32 blockHash;
@@ -24,6 +24,6 @@ interface IVrfManager {
     function fillRandWordsWithSignature(
         IVrfPod vrfPod,
         VrfRandomWords calldata vrfRandomWords,
-        IBLSApkRegistry.OracleNonSignerAndSignature memory oracleNonSignerAndSignature
+        IBLSApkRegistry.NonSignerAndSignature memory oracleNonSignerAndSignature
     ) external;
 }

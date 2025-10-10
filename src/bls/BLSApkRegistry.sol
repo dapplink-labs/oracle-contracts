@@ -11,7 +11,13 @@ import "../interfaces/IBLSApkRegistry.sol";
 
 import "./BLSApkRegistryStorage.sol";
 
-contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, BLSApkRegistryStorage, EIP712 {
+contract BLSApkRegistry is
+    Initializable,
+    OwnableUpgradeable,
+    IBLSApkRegistry,
+    BLSApkRegistryStorage,
+    EIP712
+{
     using BN254 for BN254.G1Point;
 
     uint256 internal constant PAIRING_EQUALITY_CHECK_GAS = 120000;
@@ -26,7 +32,8 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
 
     modifier onlyOracleManager() {
         require(
-            msg.sender == oracleManager, "BLSApkRegistry.onlyOracleManager: caller is not the oracle manager address"
+            msg.sender == oracleManager,
+            "BLSApkRegistry.onlyOracleManager: caller is not the oracle manager address"
         );
         _;
     }
@@ -35,23 +42,29 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         _disableInitializers();
     }
 
-    function initialize(address _initialOwner, address _whiteListAddress, address _oracleManager)
-        external
-        initializer
-    {
+    function initialize(
+        address _initialOwner,
+        address _whiteListAddress,
+        address _oracleManager
+    ) external initializer {
         __Ownable_init(_initialOwner);
         whiteListAddress = _whiteListAddress;
         oracleManager = _oracleManager;
         _initializeApk();
     }
 
-
     function registerOperator(address operator) public onlyOracleManager {
-        require(operator != address(0), "BLSApkRegistry.registerBLSPublicKey: Operator is zero address");
+        require(
+            operator != address(0),
+            "BLSApkRegistry.registerBLSPublicKey: Operator is zero address"
+        );
 
-        require(!operatorIsRegister[operator], "BLSApkRegistry.registerBLSPublicKey: Operator have already register");
+        require(
+            !operatorIsRegister[operator],
+            "BLSApkRegistry.registerBLSPublicKey: Operator have already register"
+        );
 
-        (BN254.G1Point memory pubkey,) = getRegisteredPubkey(operator);
+        (BN254.G1Point memory pubkey, ) = getRegisteredPubkey(operator);
 
         _processApkUpdate(pubkey);
 
@@ -63,9 +76,12 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
     }
 
     function deregisterOperator(address operator) public onlyOracleManager {
-        require(operatorIsRegister[operator], "BLSApkRegistry.registerBLSPublicKey: Operator have already deregister");
+        require(
+            operatorIsRegister[operator],
+            "BLSApkRegistry.registerBLSPublicKey: Operator have already deregister"
+        );
 
-        (BN254.G1Point memory pubkey,) = getRegisteredPubkey(operator);
+        (BN254.G1Point memory pubkey, ) = getRegisteredPubkey(operator);
 
         _processApkUpdate(pubkey.negate());
 
@@ -93,7 +109,10 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
 
         bytes32 pubkeyHash = BN254.hashG1Point(params.pubkeyG1);
 
-        require(pubkeyHash != ZERO_PK_HASH, "BLSApkRegistry.registerBLSPublicKey: cannot register zero pubkey");
+        require(
+            pubkeyHash != ZERO_PK_HASH,
+            "BLSApkRegistry.registerBLSPublicKey: cannot register zero pubkey"
+        );
         require(
             operatorToPubkeyHash[operator] == bytes32(0),
             "BLSApkRegistry.registerBLSPublicKey: operator already registered pubkey"
@@ -121,9 +140,13 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
 
         require(
             BN254.pairing(
-                params.pubkeyRegistrationSignature.plus(params.pubkeyG1.scalar_mul(gamma)),
+                params.pubkeyRegistrationSignature.plus(
+                    params.pubkeyG1.scalar_mul(gamma)
+                ),
                 BN254.negGeneratorG2(),
-                pubkeyRegistrationMessageHash.plus(BN254.generatorG1().scalar_mul(gamma)),
+                pubkeyRegistrationMessageHash.plus(
+                    BN254.generatorG1().scalar_mul(gamma)
+                ),
                 params.pubkeyG2
             ),
             "BLSApkRegistry.registerBLSPublicKey: either the G1 signature is wrong, or G1 and G2 private key do not match"
@@ -138,13 +161,14 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         return pubkeyHash;
     }
 
-    function checkSignatures(bytes32 msgHash, uint256 referenceBlockNumber, OracleNonSignerAndSignature memory params)
-        public
-        view
-        returns (uint256, bytes32)
-    {
+    function checkSignatures(
+        bytes32 msgHash,
+        uint256 referenceBlockNumber,
+        NonSignerAndSignature memory params
+    ) public view returns (uint256, bytes32) {
         require(
-            referenceBlockNumber < uint32(block.number), "BLSSignatureChecker.checkSignatures: invalid reference block"
+            referenceBlockNumber < uint32(block.number),
+            "BLSSignatureChecker.checkSignatures: invalid reference block"
         );
 
         uint256 nonSingerNode = params.nonSignerPubkeys.length;
@@ -158,26 +182,53 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         BN254.G1Point memory signerApk = BN254.G1Point(0, 0);
         bytes32[] memory nonSignersPubkeyHashes;
         if (params.nonSignerPubkeys.length > 0) {
-            nonSignersPubkeyHashes = new bytes32[](params.nonSignerPubkeys.length);
+            nonSignersPubkeyHashes = new bytes32[](
+                params.nonSignerPubkeys.length
+            );
             for (uint256 j = 0; j < params.nonSignerPubkeys.length; j++) {
-                nonSignersPubkeyHashes[j] = params.nonSignerPubkeys[j].hashG1Point();
-                signerApk = currentApk.plus(params.nonSignerPubkeys[j].negate());
+                nonSignersPubkeyHashes[j] = params
+                    .nonSignerPubkeys[j]
+                    .hashG1Point();
+                signerApk = currentApk.plus(
+                    params.nonSignerPubkeys[j].negate()
+                );
             }
         } else {
             signerApk = currentApk;
         }
-        (bool pairingSuccessful, bool signatureIsValid) =
-            trySignatureAndApkVerification(msgHash, signerApk, params.apkG2, params.sigma);
-        require(pairingSuccessful, "BLSSignatureChecker.checkSignatures: pairing precompile call failed");
-        require(signatureIsValid, "BLSSignatureChecker.checkSignatures: signature is invalid");
+        (
+            bool pairingSuccessful,
+            bool signatureIsValid
+        ) = trySignatureAndApkVerification(
+                msgHash,
+                signerApk,
+                params.apkG2,
+                params.sigma
+            );
+        require(
+            pairingSuccessful,
+            "BLSSignatureChecker.checkSignatures: pairing precompile call failed"
+        );
+        require(
+            signatureIsValid,
+            "BLSSignatureChecker.checkSignatures: signature is invalid"
+        );
 
-        bytes32 signatoryRecordHash = keccak256(abi.encodePacked(referenceBlockNumber, nonSignersPubkeyHashes));
+        bytes32 signatoryRecordHash = keccak256(
+            abi.encodePacked(referenceBlockNumber, nonSignersPubkeyHashes)
+        );
 
         return (params.totalStake, signatoryRecordHash);
     }
 
-    function addOrRemoveBlsRegisterWhitelist(address register, bool isAdd) external onlyWhiteListManager {
-        require(register != address(0), "BLSApkRegistry.addOrRemoverBlsRegisterWhitelist: operator address is zero");
+    function addOrRemoveBlsRegisterWhitelist(
+        address register,
+        bool isAdd
+    ) external onlyWhiteListManager {
+        require(
+            register != address(0),
+            "BLSApkRegistry.addOrRemoverBlsRegisterWhitelist: operator address is zero"
+        );
         blsRegisterWhitelist[register] = isAdd;
     }
 
@@ -190,7 +241,15 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         uint256 gamma = uint256(
             keccak256(
                 abi.encodePacked(
-                    msgHash, apk.X, apk.Y, apkG2.X[0], apkG2.X[1], apkG2.Y[0], apkG2.Y[1], sigma.X, sigma.Y
+                    msgHash,
+                    apk.X,
+                    apk.Y,
+                    apkG2.X[0],
+                    apkG2.X[1],
+                    apkG2.Y[0],
+                    apkG2.Y[1],
+                    sigma.X,
+                    sigma.Y
                 )
             )
         ) % BN254.FR_MODULUS;
@@ -207,7 +266,10 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         BN254.G1Point memory newApk;
 
         uint256 historyLength = apkHistory.length;
-        require(historyLength != 0, "BLSApkRegistry._processApkUpdate: quorum does not exist");
+        require(
+            historyLength != 0,
+            "BLSApkRegistry._processApkUpdate: quorum does not exist"
+        );
 
         newApk = currentApk.plus(point);
         currentApk = newApk;
@@ -220,29 +282,54 @@ contract BLSApkRegistry is Initializable, OwnableUpgradeable, IBLSApkRegistry, B
         } else {
             lastUpdate.nextUpdateBlockNumber = uint32(block.number);
             apkHistory.push(
-                ApkUpdate({apkHash: newApkHash, updateBlockNumber: uint32(block.number), nextUpdateBlockNumber: 0})
+                ApkUpdate({
+                    apkHash: newApkHash,
+                    updateBlockNumber: uint32(block.number),
+                    nextUpdateBlockNumber: 0
+                })
             );
         }
     }
 
-    function getRegisteredPubkey(address operator) public view returns (BN254.G1Point memory, bytes32) {
+    function getRegisteredPubkey(
+        address operator
+    ) public view returns (BN254.G1Point memory, bytes32) {
         BN254.G1Point memory pubkey = operatorToPubkey[operator];
         bytes32 pubkeyHash = operatorToPubkeyHash[operator];
 
-        require(pubkeyHash != bytes32(0), "BLSApkRegistry.getRegisteredPubkey: operator is not registered");
+        require(
+            pubkeyHash != bytes32(0),
+            "BLSApkRegistry.getRegisteredPubkey: operator is not registered"
+        );
 
         return (pubkey, pubkeyHash);
     }
 
-    function getPubkeyRegMessageHash(address operator) public view returns (BN254.G1Point memory) {
-        return BN254.hashToG1(_hashTypedDataV4(keccak256(abi.encode(PUBKEY_REGISTRATION_TYPEHASH, operator))));
+    function getPubkeyRegMessageHash(
+        address operator
+    ) public view returns (BN254.G1Point memory) {
+        return
+            BN254.hashToG1(
+                _hashTypedDataV4(
+                    keccak256(
+                        abi.encode(PUBKEY_REGISTRATION_TYPEHASH, operator)
+                    )
+                )
+            );
     }
 
     function _initializeApk() internal {
-        require(apkHistory.length == 0, "BLSApkRegistry.initializeApk: apk already exists");
+        require(
+            apkHistory.length == 0,
+            "BLSApkRegistry.initializeApk: apk already exists"
+        );
 
         apkHistory.push(
-            ApkUpdate({apkHash: bytes24(0), updateBlockNumber: uint32(block.number), nextUpdateBlockNumber: 0})
+            ApkUpdate({
+                apkHash: bytes24(0),
+                updateBlockNumber: uint32(block.number),
+                nextUpdateBlockNumber: 0
+            })
         );
     }
 

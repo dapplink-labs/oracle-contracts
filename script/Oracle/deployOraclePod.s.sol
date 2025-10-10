@@ -2,17 +2,16 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Vm.sol";
-import { console, Script } from "forge-std/Script.sol";
+import {console, Script} from "forge-std/Script.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import { EmptyContract } from "../src/utils/EmptyContract.sol";
-import { OraclePod } from "../src/pod/OraclePod.sol";
-import { OracleManager } from "../src/core/OracleManager.sol";
+import {EmptyContract} from "../../src/utils/EmptyContract.sol";
+import {OraclePod} from "../../src/pod/OraclePod.sol";
+import {OracleManager} from "../../src/core/OracleManager.sol";
 
-import { IOracleManager } from "../src/interfaces/IOracleManager.sol";
-import { IOraclePod } from "../src/interfaces/IOraclePod.sol";
-
+import {IOracleManager} from "../../src/interfaces/IOracleManager.sol";
+import {IOraclePod} from "../../src/interfaces/IOraclePod.sol";
 
 contract deployOraclePodScript is Script {
     EmptyContract public emptyContract;
@@ -30,12 +29,21 @@ contract deployOraclePodScript is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         emptyContract = new EmptyContract();
-        TransparentUpgradeableProxy proxyOraclePod = new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
+        TransparentUpgradeableProxy proxyOraclePod = new TransparentUpgradeableProxy(
+                address(emptyContract),
+                deployerAddress,
+                ""
+            );
         oraclePod = OraclePod(address(proxyOraclePod));
         oraclePodImplementation = new OraclePod();
-        oraclePodAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyOraclePod)));
+        oraclePodAdmin = ProxyAdmin(
+            getProxyAdminAddress(address(proxyOraclePod))
+        );
 
-        console.log("oraclePodImplementation===", address(oraclePodImplementation));
+        console.log(
+            "oraclePodImplementation===",
+            address(oraclePodImplementation)
+        );
 
         oraclePodAdmin.upgradeAndCall(
             ITransparentUpgradeableProxy(address(oraclePod)),
@@ -47,20 +55,27 @@ contract deployOraclePodScript is Script {
             )
         );
 
-//        OracleManager(oracleManagerAddr).addOraclePodToFillWhitelist(proxyOraclePod);
-
+        //        OracleManager(oracleManagerAddr).addOraclePodToFillWhitelist(proxyOraclePod);
 
         console.log("deploy proxyOraclePod:", address(proxyOraclePod));
         string memory path = "deployed_addresses.json";
-        string memory data = string(abi.encodePacked(
-            '{"proxyOraclePod": "', vm.toString(address(proxyOraclePod)), '", ',
-            '"oraclePodImplementation": "', vm.toString(address(oraclePodImplementation)), '"}'
-        ));
+        string memory data = string(
+            abi.encodePacked(
+                '{"proxyOraclePod": "',
+                vm.toString(address(proxyOraclePod)),
+                '", ',
+                '"oraclePodImplementation": "',
+                vm.toString(address(oraclePodImplementation)),
+                '"}'
+            )
+        );
         vm.writeJson(data, path);
         vm.stopBroadcast();
     }
 
-    function getProxyAdminAddress(address proxy) internal view returns (address) {
+    function getProxyAdminAddress(
+        address proxy
+    ) internal view returns (address) {
         address CHEATCODE_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
         Vm vm = Vm(CHEATCODE_ADDRESS);
 

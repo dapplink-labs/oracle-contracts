@@ -2,110 +2,128 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "../src/pod/OraclePod.sol";
+import "../src/pod/EventPod.sol";
+import {EventPodStorage} from "../src/pod/EventPodStorage.sol";
 import "../src/bls/BLSApkRegistry.sol";
-import "../src/core/OracleManager.sol";
+import "../src/core/EventManager.sol";
 import "../src/interfaces/IBLSApkRegistry.sol";
-import "../src/interfaces/IOracleManager.sol";
+import "../src/interfaces/IEventManager.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract OraclePodTest is Test {
-    OraclePod logic;
-    OraclePod pod;
+contract EventPodTest is Test {
+    EventPod logic;
+    EventPod pod;
 
     address deployer = address(0xA1);
-    address oracleManager = address(0xB1);
+    address eventManager = address(0xB1);
     address other = address(0xC1);
+    uint256 requestId = 888;
+    string winner = "pos";
+
+    EventPodStorage.PredictEventInfo predictEventInfo =
+        EventPodStorage.PredictEventInfo({
+            requestId: 888,
+            eventDescribe: "Team A vs Team B",
+            predictPosSide: "Team A wins",
+            predictNegSide: "Team B wins",
+            winner: "unknown"
+        });
 
     function setUp() public {
         vm.prank(deployer);
-        logic = new OraclePod();
+        logic = new EventPod();
 
         bytes memory initData = abi.encodeWithSelector(
-            OraclePod.initialize.selector,
+            EventPod.initialize.selector,
             deployer,
-            oracleManager
+            eventManager
         );
 
         vm.prank(deployer);
         ERC1967Proxy proxy = new ERC1967Proxy(address(logic), initData);
-        pod = OraclePod(address(proxy));
+        pod = EventPod(address(proxy));
     }
 
-    function testInitializeSetsOwnerAndOracleManager() public view {
+    function testInitializeSetsOwnerAndEventManager() public view {
         assertEq(pod.owner(), deployer);
-        assertEq(pod.oracleManager(), oracleManager);
+        assertEq(pod.eventManager(), eventManager);
     }
 
-    function testOnlyOracleManagerCanFillSymbolPrice() public {
-        string memory price = "1000";
-
-        // 非 oracleManager 调用失败
+    function testOnlyEventManagerCanSubmitEventResult() public {
+        // 非 EventManager 调用失败
         vm.prank(other);
         vm.expectRevert(
-            "OraclePod.onlyOracleManager: caller is not the oracle manager address"
+            "EventPod.onlyEventManager: caller is not the event manager address"
         );
-        pod.fillSymbolPrice(price);
+        pod.submitEventResult(requestId, winner);
 
-        // oracleManager 调用成功
-        vm.prank(oracleManager);
-        pod.fillSymbolPrice(price);
+        // EventManager 调用成功
+        vm.prank(eventManager);
+        pod.submitEventResult(requestId, winner);
 
-        assertEq(pod.getSymbolPrice(), price);
+        (
+            string memory posSide,
+            string memory negSide,
+            string memory winner1
+        ) = pod.fetchEventResult(requestId);
+
+        // assertEq(posSide, true);
+        assertEq(winner1, winner);
     }
 
-    function testFillAndGetPrice() public {
-        string memory price = "1234";
-
-        vm.prank(address(0xE5));
+    function testOnlyOwnerCanSetEventManager() public {
+        vm.prank(eventManager);
         vm.expectRevert(
-            "OraclePod.onlyOracleManager: caller is not the oracle manager address"
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                eventManager
+            )
         );
-        pod.fillSymbolPrice(price);
+        pod.setEventManager(address(0xD1));
 
-        vm.prank(oracleManager);
-        pod.fillSymbolPrice(price);
-
-        string memory got = pod.getSymbolPrice();
-        assertEq(got, price);
-    }
-
-    function testIsDataFresh() public {
-        string memory price = "5678";
-
-        vm.prank(oracleManager);
-        pod.fillSymbolPrice(price);
-
-        // 立即检查，数据应为新鲜
-        bool fresh = pod.isDataFresh(10);
-        assertTrue(fresh);
-
-        // 增加时间超过阈值，数据应不新鲜
-        vm.warp(block.timestamp + 20);
-        fresh = pod.isDataFresh(10);
-        assertTrue(!fresh);
-    }
-
-    function testOnlyOwnerCanSetOracleManager() public {
-        address newManager = address(0xD1);
-
-        // 非 owner 调用失败
-        vm.prank(other);
-        vm.expectRevert();
-        pod.setOracleManager(newManager);
-
-        // owner 调用成功
         vm.prank(deployer);
-        pod.setOracleManager(newManager);
+        pod.setEventManager(address(0xD1));
+        assertEq(pod.eventManager(), address(0xD1));
+    }
 
-        assertEq(pod.oracleManager(), newManager);
+    function testCreateEvent() public {
+        pod.createEvent(
+            requestId,
+            "Team A vs Team B",
+            "Team A wins",
+            "Team B wins"
+        );
+
+        (
+            uint256 reqId,
+            string memory eventDescribe,
+            string memory posSide,
+            string memory negSide,
+            string memory winner1
+        ) = pod.predictEventMapping(requestId);
+
+        (
+            string memory posSide1,
+            string memory negSide1,
+            string memory winner11
+        ) = pod.fetchEventResult(requestId);
+
+        assertEq(posSide1, posSide);
+        assertEq(negSide1, negSide);
+        assertEq(winner11, winner1);
+        assertEq(reqId, predictEventInfo.requestId);
+        assertEq(eventDescribe, predictEventInfo.eventDescribe);
+        assertEq(posSide, predictEventInfo.predictPosSide);
+        assertEq(negSide, predictEventInfo.predictNegSide);
+        assertEq(winner1, predictEventInfo.winner);
     }
 }
 
-contract OracleManagerTest is Test {
-    OracleManager oracleManager;
+contract EventManagerTest is Test {
+    EventManager eventManager;
     BLSApkRegistry blsRegistry;
-    OraclePod oraclePod;
+    EventPod eventPod;
 
     address owner = address(0xA1);
     address aggregator = address(0xA2);
@@ -115,9 +133,9 @@ contract OracleManagerTest is Test {
 
     function setUp() public {
         // 部署逻辑合约
-        OracleManager os_logic = new OracleManager();
+        EventManager os_logic = new EventManager();
         BLSApkRegistry bls_logic = new BLSApkRegistry();
-        OraclePod op_logic = new OraclePod();
+        EventPod op_logic = new EventPod();
 
         // 部署代理合约
         ERC1967Proxy os_proxy = new ERC1967Proxy(address(os_logic), "");
@@ -125,17 +143,17 @@ contract OracleManagerTest is Test {
         ERC1967Proxy bls_proxy = new ERC1967Proxy(address(bls_logic), "");
 
         // 转换代理合约的接口
-        oracleManager = OracleManager(address(os_proxy));
+        eventManager = EventManager(address(os_proxy));
         blsRegistry = BLSApkRegistry(address(bls_proxy));
-        oraclePod = OraclePod(address(op_proxy));
+        eventPod = EventPod(address(op_proxy));
 
         // 初始化合约
         vm.prank(owner);
-        oracleManager.initialize(owner, address(blsRegistry), aggregator);
+        eventManager.initialize(owner, address(blsRegistry), aggregator);
         vm.prank(owner);
-        blsRegistry.initialize(owner, whiteListManager, address(oracleManager));
+        blsRegistry.initialize(owner, whiteListManager, address(eventManager));
         vm.prank(owner);
-        oraclePod.initialize(owner, address(oracleManager));
+        eventPod.initialize(owner, address(eventManager));
 
         // 添加 operator 到白名单
         vm.prank(whiteListManager);
@@ -183,7 +201,7 @@ contract OracleManagerTest is Test {
             msgHash
         );
 
-        vm.prank(address(oracleManager));
+        vm.prank(address(eventManager));
         blsRegistry.registerOperator(address(operator));
     }
 
@@ -192,90 +210,90 @@ contract OracleManagerTest is Test {
         vm.expectRevert(
             "PodManager.onlyAggregatorManager: not the aggregator address"
         );
-        oracleManager.addOrRemoveOperatorWhitelist(operator, true);
+        eventManager.addOrRemoveOperatorWhitelist(operator, true);
 
         vm.prank(aggregator);
-        oracleManager.addOrRemoveOperatorWhitelist(operator, true);
+        eventManager.addOrRemoveOperatorWhitelist(operator, true);
 
         vm.prank(aggregator);
         vm.expectRevert(
             "PodManager.addOperatorWhitelist: operator address is zero"
         );
-        oracleManager.addOrRemoveOperatorWhitelist(address(0), true);
+        eventManager.addOrRemoveOperatorWhitelist(address(0), true);
     }
 
     function test_setAggregatorAddress() public {
         vm.prank(address(0xE5));
         vm.expectRevert();
-        oracleManager.setAggregatorAddress(aggregator);
+        eventManager.setAggregatorAddress(aggregator);
 
         vm.prank(owner);
-        oracleManager.setAggregatorAddress(aggregator);
+        eventManager.setAggregatorAddress(aggregator);
 
         vm.prank(owner);
         vm.expectRevert(
             "PodManager.addAggregator: aggregatorAddress address is zero"
         );
-        oracleManager.setAggregatorAddress(address(0));
+        eventManager.setAggregatorAddress(address(0));
     }
 
-    function test_addOrRemoveOraclePodToFillWhitelist() public {
+    function test_addOrRemoveEventPodToFillWhitelist() public {
         vm.prank(address(0xE5));
         vm.expectRevert(
             "PodManager.onlyAggregatorManager: not the aggregator address"
         );
-        oracleManager.addPodToFillWhitelist(address(oraclePod));
+        eventManager.addPodToFillWhitelist(address(eventPod));
 
         vm.prank(address(0xE5));
         vm.expectRevert(
             "PodManager.onlyAggregatorManager: not the aggregator address"
         );
-        oracleManager.removePodToFillWhitelist(address(oraclePod));
+        eventManager.removePodToFillWhitelist(address(eventPod));
 
         vm.prank(aggregator);
-        oracleManager.addPodToFillWhitelist(address(oraclePod));
+        eventManager.addPodToFillWhitelist(address(eventPod));
         vm.prank(aggregator);
-        oracleManager.removePodToFillWhitelist(address(oraclePod));
+        eventManager.removePodToFillWhitelist(address(eventPod));
     }
 
     function test_RegisterandDegisterOperator() public {
         vm.prank(aggregator);
-        oracleManager.addOrRemoveOperatorWhitelist(operator, true);
+        eventManager.addOrRemoveOperatorWhitelist(operator, true);
 
         vm.prank(address(0xE1));
         vm.expectRevert(
             "PodManager.registerOperator: this address have not permission to register "
         );
-        oracleManager.registerOperator("http://node.url");
+        eventManager.registerOperator("http://node.url");
 
         vm.prank(operator);
         vm.expectRevert(
             "BLSApkRegistry.registerBLSPublicKey: Operator have already register"
         );
-        oracleManager.registerOperator("http://node.url");
+        eventManager.registerOperator("http://node.url");
 
         vm.prank(address(0xE1));
         vm.expectRevert(
             "PodManager.registerOperator: this address have not permission to register "
         );
-        oracleManager.deRegisterOperator();
+        eventManager.deRegisterOperator();
 
         vm.prank(operator);
-        oracleManager.deRegisterOperator();
+        eventManager.deRegisterOperator();
 
         vm.prank(aggregator);
-        oracleManager.addOrRemoveOperatorWhitelist(operator, false);
+        eventManager.addOrRemoveOperatorWhitelist(operator, false);
 
         vm.prank(operator);
         vm.expectRevert(
             "PodManager.registerOperator: this address have not permission to register "
         );
-        oracleManager.registerOperator("http://node.url");
+        eventManager.registerOperator("http://node.url");
     }
 
-    function testFillSymbolPriceWithSignature() public {
+    function testFillEventResultWithSignature() public {
         vm.prank(aggregator);
-        oracleManager.addPodToFillWhitelist(address(oraclePod));
+        eventManager.addPodToFillWhitelist(address(eventPod));
 
         IBLSApkRegistry.NonSignerAndSignature
             memory noSignerAndSignature = IBLSApkRegistry
@@ -297,21 +315,29 @@ contract OracleManagerTest is Test {
                     }),
                     totalStake: 888
                 });
-        IOracleManager.OracleBatch memory batch = IOracleManager.OracleBatch({
-            msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
-            blockNumber: block.number - 1,
-            symbolPrice: "888",
-            blockHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935
-        });
+
+        IEventManager.PredictEvents memory predictEvents = IEventManager
+            .PredictEvents({
+                msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
+                blockNumber: block.number - 1,
+                requestId: 888,
+                blockHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
+                winner: "pos"
+            });
 
         vm.prank(aggregator);
-        oracleManager.fillSymbolPriceWithSignature(
-            oraclePod,
-            batch,
+        eventManager.fillEventResultWithSignature(
+            eventPod,
+            predictEvents,
             noSignerAndSignature
         );
+        (
+            string memory posSide1,
+            string memory negSide1,
+            string memory winner11
+        ) = eventPod.fetchEventResult(888);
 
-        assertEq(oraclePod.getSymbolPrice(), "888");
+        assertEq(winner11, "pos");
     }
 
     function testFillSymbolPriceWithoutWhitelistOrAuthority() public {
@@ -335,20 +361,23 @@ contract OracleManagerTest is Test {
                     }),
                     totalStake: 888
                 });
-        IOracleManager.OracleBatch memory batch = IOracleManager.OracleBatch({
-            msgHash: 0x3f0a377ba0a4a460ecb616f6507ce0d8cfa3e704025d4fda3ed0c5ca05468728,
-            blockNumber: block.number - 1,
-            symbolPrice: "888",
-            blockHash: 0x3f0a377ba0a4a460ecb616f6507ce0d8cfa3e704025d4fda3ed0c5ca05468728
-        });
+
+        IEventManager.PredictEvents memory predictEvents = IEventManager
+            .PredictEvents({
+                msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
+                blockNumber: block.number - 1,
+                requestId: 888,
+                blockHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
+                winner: "pos"
+            });
 
         vm.prank(address(0xE1));
         vm.expectRevert(
             "PodManager.onlyAggregatorManager: not the aggregator address"
         );
-        oracleManager.fillSymbolPriceWithSignature(
-            oraclePod,
-            batch,
+        eventManager.fillEventResultWithSignature(
+            eventPod,
+            predictEvents,
             noSignerAndSignature
         );
 
@@ -356,9 +385,9 @@ contract OracleManagerTest is Test {
         vm.expectRevert(
             "PodManager.onlyPodWhitelistedForFill: pod not whitelisted"
         );
-        oracleManager.fillSymbolPriceWithSignature(
-            oraclePod,
-            batch,
+        eventManager.fillEventResultWithSignature(
+            eventPod,
+            predictEvents,
             noSignerAndSignature
         );
     }
