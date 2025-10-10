@@ -23,11 +23,7 @@ interface IBLSApkRegistry {
         BN254.G2Point pubkeyG2;
     }
 
-    event NewPubkeyRegistration(
-        address indexed operator,
-        BN254.G1Point pubkeyG1,
-        BN254.G2Point pubkeyG2
-    );
+    event NewPubkeyRegistration(address indexed operator, BN254.G1Point pubkeyG1, BN254.G2Point pubkeyG2);
 
     event OperatorAdded(address operator, bytes32 operatorId);
 
@@ -43,22 +39,14 @@ interface IBLSApkRegistry {
         BN254.G1Point memory msgHash
     ) external returns (bytes32);
 
-    function checkSignatures(
-        bytes32 msgHash,
-        uint256 referenceBlockNumber,
-        NonSignerAndSignature memory params
-    ) external view returns (uint256, bytes32);
+    function checkSignatures(bytes32 msgHash, uint256 referenceBlockNumber, NonSignerAndSignature memory params)
+        external
+        view
+        returns (uint256, bytes32);
 
-    function getRegisteredPubkey(
-        address operator
-    ) external view returns (BN254.G1Point memory, bytes32);
+    function getRegisteredPubkey(address operator) external view returns (BN254.G1Point memory, bytes32);
 
-    function addOrRemoveBlsRegisterWhitelist(
-        address operator,
-        bool isAdd
-    ) external;
+    function addOrRemoveBlsRegisterWhitelist(address operator, bool isAdd) external;
 
-    function getPubkeyRegMessageHash(
-        address operator
-    ) external view returns (BN254.G1Point memory);
+    function getPubkeyRegMessageHash(address operator) external view returns (BN254.G1Point memory);
 }

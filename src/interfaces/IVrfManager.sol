@@ -6,12 +6,7 @@ import "./IBLSApkRegistry.sol";
 import {IVrfPod} from "./IVrfPod.sol";
 
 interface IVrfManager {
-    event VerifyVrfSig(
-        uint256 requestId,
-        uint256 totalStaking,
-        bytes32 signatoryRecordHash,
-        uint256[] _randomWords
-    );
+    event VerifyVrfSig(uint256 requestId, uint256 totalStaking, bytes32 signatoryRecordHash, uint256[] _randomWords);
 
     struct VrfRandomWords {
         uint256 requestId;

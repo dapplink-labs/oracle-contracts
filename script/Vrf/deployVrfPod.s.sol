@@ -30,11 +30,8 @@ contract deployVrfPodScript is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         emptyContract = new EmptyContract();
-        TransparentUpgradeableProxy proxyVrfPod = new TransparentUpgradeableProxy(
-                address(emptyContract),
-                deployerAddress,
-                ""
-            );
+        TransparentUpgradeableProxy proxyVrfPod =
+            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         vrfPod = VrfPod(address(proxyVrfPod));
         vrfPodImplementation = new VrfPod();
         vrfPodAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyVrfPod)));
@@ -44,11 +41,7 @@ contract deployVrfPodScript is Script {
         vrfPodAdmin.upgradeAndCall(
             ITransparentUpgradeableProxy(address(vrfPod)),
             address(vrfPodImplementation),
-            abi.encodeWithSelector(
-                VrfPod.initialize.selector,
-                deployerAddress,
-                vrfManagerAddr
-            )
+            abi.encodeWithSelector(VrfPod.initialize.selector, deployerAddress, vrfManagerAddr)
         );
 
         // VrfManager(vrfManagerAddr).addVrfPodToFillWhitelist(proxyVrfPod);
@@ -69,9 +62,7 @@ contract deployVrfPodScript is Script {
         vm.stopBroadcast();
     }
 
-    function getProxyAdminAddress(
-        address proxy
-    ) internal view returns (address) {
+    function getProxyAdminAddress(address proxy) internal view returns (address) {
         address CHEATCODE_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
         Vm vm = Vm(CHEATCODE_ADDRESS);
 

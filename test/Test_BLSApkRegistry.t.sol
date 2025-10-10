@@ -17,12 +17,8 @@ contract BLSApkRegistryTest is Test {
     function setUp() public {
         BLSApkRegistry logic = new BLSApkRegistry();
 
-        bytes memory data = abi.encodeWithSelector(
-            BLSApkRegistry.initialize.selector,
-            owner,
-            whiteListManager,
-            oracleManager
-        );
+        bytes memory data =
+            abi.encodeWithSelector(BLSApkRegistry.initialize.selector, owner, whiteListManager, oracleManager);
 
         proxy = new ERC1967Proxy(address(logic), data);
         registry = BLSApkRegistry(address(proxy));
@@ -37,9 +33,7 @@ contract BLSApkRegistryTest is Test {
 
         // 测试 onlyWhiteListManager
         vm.prank(someAddr);
-        vm.expectRevert(
-            "BLSApkRegistry.onlyWhiteListManager: caller is not white list address"
-        );
+        vm.expectRevert("BLSApkRegistry.onlyWhiteListManager: caller is not white list address");
         registry.addOrRemoveBlsRegisterWhitelist(address(0xDEAD), true);
     }
 
@@ -71,58 +65,43 @@ contract BLSApkRegistryTest is Test {
             Y: 13194418538414467055050033907265106142712607841859396823411150580302706299760
         });
 
-        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry
-            .PubkeyRegistrationParams({
-                pubkeyG1: pubKeyG1,
-                pubkeyG2: pubKeyG2,
-                pubkeyRegistrationSignature: signature
-            });
+        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry.PubkeyRegistrationParams({
+            pubkeyG1: pubKeyG1,
+            pubkeyG2: pubKeyG2,
+            pubkeyRegistrationSignature: signature
+        });
 
         // 测试注册新的 pubkey 是否成功
         vm.prank(blsRegister);
-        bytes32 pubkeyHash = registry.registerBLSPublicKey(
-            blsRegister,
-            params,
-            msgHash
-        );
+        bytes32 pubkeyHash = registry.registerBLSPublicKey(blsRegister, params, msgHash);
 
         bytes32 readHash = registry.getPubkeyHash(blsRegister);
         assertEq(pubkeyHash, readHash);
 
         // 测试同一个 operator 不能重复注册 pubkey
         vm.prank(blsRegister);
-        vm.expectRevert(
-            "BLSApkRegistry.registerBLSPublicKey: operator already registered pubkey"
-        );
+        vm.expectRevert("BLSApkRegistry.registerBLSPublicKey: operator already registered pubkey");
         registry.registerBLSPublicKey(blsRegister, params, msgHash);
     }
 
     function testCannotRegisterWithZeroPubkey() public {
         BN254.G1Point memory zeroG1 = BN254.G1Point(0, 0);
-        BN254.G2Point memory pubKeyG2 = BN254.G2Point(
-            [uint256(1), 1],
-            [uint256(1), 1]
-        );
+        BN254.G2Point memory pubKeyG2 = BN254.G2Point([uint256(1), 1], [uint256(1), 1]);
 
-        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry
-            .PubkeyRegistrationParams({
-                pubkeyG1: zeroG1,
-                pubkeyG2: pubKeyG2,
-                pubkeyRegistrationSignature: zeroG1 // 乱填，为了过编译
-            });
+        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry.PubkeyRegistrationParams({
+            pubkeyG1: zeroG1,
+            pubkeyG2: pubKeyG2,
+            pubkeyRegistrationSignature: zeroG1 // 乱填，为了过编译
+        });
 
         BN254.G1Point memory dummyMsgHash = BN254.G1Point(1, 2); // dummy
 
         vm.prank(blsRegister);
-        vm.expectRevert(
-            "BLSApkRegistry.registerBLSPublicKey: cannot register zero pubkey"
-        );
+        vm.expectRevert("BLSApkRegistry.registerBLSPublicKey: cannot register zero pubkey");
         registry.registerBLSPublicKey(blsRegister, params, dummyMsgHash);
 
         vm.prank(blsRegister);
-        vm.expectRevert(
-            "BLSApkRegistry.registerBLSPublicKey: this caller is not operator"
-        );
+        vm.expectRevert("BLSApkRegistry.registerBLSPublicKey: this caller is not operator");
         registry.registerBLSPublicKey(address(0xEdc), params, dummyMsgHash);
     }
 
@@ -132,9 +111,7 @@ contract BLSApkRegistryTest is Test {
 
         // 非 oracleManager 调用 registerOperator
         vm.prank(address(0x111));
-        vm.expectRevert(
-            "BLSApkRegistry.onlyOracleManager: caller is not the oracle manager address"
-        );
+        vm.expectRevert("BLSApkRegistry.onlyOracleManager: caller is not the oracle manager address");
         registry.registerOperator(blsRegister);
 
         // 正常调用
@@ -143,9 +120,7 @@ contract BLSApkRegistryTest is Test {
 
         // 非 oracleManager 调用 deregisterOperator
         vm.prank(address(0x111));
-        vm.expectRevert(
-            "BLSApkRegistry.onlyOracleManager: caller is not the oracle manager address"
-        );
+        vm.expectRevert("BLSApkRegistry.onlyOracleManager: caller is not the oracle manager address");
         registry.deregisterOperator(address(0xBEE));
 
         // 正常调用
@@ -154,9 +129,7 @@ contract BLSApkRegistryTest is Test {
     }
 
     function testGetPubkeyRegMessageHash() public view {
-        BN254.G1Point memory h = registry.getPubkeyRegMessageHash(
-            address(0xBEE)
-        );
+        BN254.G1Point memory h = registry.getPubkeyRegMessageHash(address(0xBEE));
         assertTrue(h.X != 0 && h.Y != 0, "Message hash should not be zero");
     }
 
@@ -170,28 +143,20 @@ contract BLSApkRegistryTest is Test {
         registry.addOrRemoveBlsRegisterWhitelist(tester, false);
 
         BN254.G1Point memory dummy = BN254.G1Point(1, 2);
-        BN254.G2Point memory dummyG2 = BN254.G2Point(
-            [uint256(11), 21],
-            [uint256(11), 41]
-        );
+        BN254.G2Point memory dummyG2 = BN254.G2Point([uint256(11), 21], [uint256(11), 41]);
 
-        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry
-            .PubkeyRegistrationParams({
-                pubkeyG1: dummy,
-                pubkeyG2: dummyG2,
-                pubkeyRegistrationSignature: dummy
-            });
+        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry.PubkeyRegistrationParams({
+            pubkeyG1: dummy,
+            pubkeyG2: dummyG2,
+            pubkeyRegistrationSignature: dummy
+        });
 
         vm.prank(tester);
-        vm.expectRevert(
-            "BLSApkRegistry.registerBLSPublicKey: this caller is not operator"
-        );
+        vm.expectRevert("BLSApkRegistry.registerBLSPublicKey: this caller is not operator");
         registry.registerBLSPublicKey(address(0xDDD), params, dummy);
 
         vm.prank(tester);
-        vm.expectRevert(
-            "BLSApkRegistry.registerBLSPublicKey: this address have not permission to register bls key"
-        );
+        vm.expectRevert("BLSApkRegistry.registerBLSPublicKey: this address have not permission to register bls key");
         registry.registerBLSPublicKey(tester, params, dummy);
     }
 
@@ -220,13 +185,8 @@ contract BLSApkRegistryTest is Test {
         });
 
         // 4. 调用验证函数
-        (bool pairingSuccessful, bool sigValid) = registry
-            .trySignatureAndApkVerification(
-                msgHash,
-                pubKeyG1,
-                pubKeyG2,
-                signature
-            );
+        (bool pairingSuccessful, bool sigValid) =
+            registry.trySignatureAndApkVerification(msgHash, pubKeyG1, pubKeyG2, signature);
 
         // 5. 断言
         assertTrue(pairingSuccessful, "Pairing failed");
@@ -261,40 +221,27 @@ contract BLSApkRegistryTest is Test {
             Y: 18512095983377956955654133313299197583137445769983185530805027107069225976299
         });
 
-        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry
-            .PubkeyRegistrationParams({
-                pubkeyG1: pubKeyG1,
-                pubkeyG2: pubKeyG2,
-                pubkeyRegistrationSignature: signature
-            });
+        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry.PubkeyRegistrationParams({
+            pubkeyG1: pubKeyG1,
+            pubkeyG2: pubKeyG2,
+            pubkeyRegistrationSignature: signature
+        });
 
         // 测试白名单限制
         vm.prank(address(0xA5));
-        vm.expectRevert(
-            "BLSApkRegistry.registerBLSPublicKey: this address have not permission to register bls key"
-        );
-        bytes32 pubkeyHash1 = registry.registerBLSPublicKey(
-            address(0xA5),
-            params,
-            msgHash
-        );
+        vm.expectRevert("BLSApkRegistry.registerBLSPublicKey: this address have not permission to register bls key");
+        bytes32 pubkeyHash1 = registry.registerBLSPublicKey(address(0xA5), params, msgHash);
 
         // 测试注册新的 pubkey 是否成功
         vm.prank(blsRegister);
-        bytes32 pubkeyHash = registry.registerBLSPublicKey(
-            blsRegister,
-            params,
-            msgHash
-        );
+        bytes32 pubkeyHash = registry.registerBLSPublicKey(blsRegister, params, msgHash);
 
         bytes32 readHash = registry.getPubkeyHash(blsRegister);
         assertEq(pubkeyHash, readHash);
 
         // 测试同一个 operator 不能重复注册 pubkey
         vm.prank(blsRegister);
-        vm.expectRevert(
-            "BLSApkRegistry.registerBLSPublicKey: operator already registered pubkey"
-        );
+        vm.expectRevert("BLSApkRegistry.registerBLSPublicKey: operator already registered pubkey");
         registry.registerBLSPublicKey(blsRegister, params, msgHash);
     }
 }

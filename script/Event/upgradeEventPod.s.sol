@@ -30,24 +30,17 @@ contract upgradeEventPodScript is Script {
 
         EventPod newEventPodImplementation = new EventPod();
 
-        console.log(
-            "New EventPod implementation:",
-            address(newEventPodImplementation)
-        );
+        console.log("New EventPod implementation:", address(newEventPodImplementation));
 
         messageManagerProxyAdmin.upgradeAndCall(
-            ITransparentUpgradeableProxy(ORACLE_POD),
-            address(newEventPodImplementation),
-            ""
+            ITransparentUpgradeableProxy(ORACLE_POD), address(newEventPodImplementation), ""
         );
 
         console.log("Upgrade completed successfully!");
         vm.stopBroadcast();
     }
 
-    function getProxyAdminAddress(
-        address proxy
-    ) internal view returns (address) {
+    function getProxyAdminAddress(address proxy) internal view returns (address) {
         address CHEATCODE_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
         Vm vm = Vm(CHEATCODE_ADDRESS);
 

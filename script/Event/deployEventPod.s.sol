@@ -29,30 +29,18 @@ contract deployEventPodScript is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         emptyContract = new EmptyContract();
-        TransparentUpgradeableProxy proxyEventPod = new TransparentUpgradeableProxy(
-                address(emptyContract),
-                deployerAddress,
-                ""
-            );
+        TransparentUpgradeableProxy proxyEventPod =
+            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         eventPod = EventPod(address(proxyEventPod));
         eventPodImplementation = new EventPod();
-        eventPodAdmin = ProxyAdmin(
-            getProxyAdminAddress(address(proxyEventPod))
-        );
+        eventPodAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyEventPod)));
 
-        console.log(
-            "eventPodImplementation===",
-            address(eventPodImplementation)
-        );
+        console.log("eventPodImplementation===", address(eventPodImplementation));
 
         eventPodAdmin.upgradeAndCall(
             ITransparentUpgradeableProxy(address(eventPod)),
             address(eventPodImplementation),
-            abi.encodeWithSelector(
-                EventPod.initialize.selector,
-                deployerAddress,
-                eventManagerAddr
-            )
+            abi.encodeWithSelector(EventPod.initialize.selector, deployerAddress, eventManagerAddr)
         );
 
         //        EventManager(eventManagerAddr).addEventPodToFillWhitelist(proxyEventPod);
@@ -73,9 +61,7 @@ contract deployEventPodScript is Script {
         vm.stopBroadcast();
     }
 
-    function getProxyAdminAddress(
-        address proxy
-    ) internal view returns (address) {
+    function getProxyAdminAddress(address proxy) internal view returns (address) {
         address CHEATCODE_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
         Vm vm = Vm(CHEATCODE_ADDRESS);
 

@@ -31,38 +31,25 @@ contract deployEventScript is Script {
 
         // Deploy BLSApkRegistry proxy and delegate to a empty contract first
         emptyContract = new EmptyContract();
-        TransparentUpgradeableProxy proxyBlsApkRegistry = new TransparentUpgradeableProxy(
-                address(emptyContract),
-                deployerAddress,
-                ""
-            );
+        TransparentUpgradeableProxy proxyBlsApkRegistry =
+            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         blsApkRegistry = BLSApkRegistry(address(proxyBlsApkRegistry));
         blsApkRegistryImplementation = new BLSApkRegistry();
-        blsApkRegistryProxyAdmin = ProxyAdmin(
-            getProxyAdminAddress(address(proxyBlsApkRegistry))
-        );
+        blsApkRegistryProxyAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyBlsApkRegistry)));
 
         // Deploy EventManager proxy and delegate to a empty contract first
-        TransparentUpgradeableProxy proxyEventManager = new TransparentUpgradeableProxy(
-                address(emptyContract),
-                deployerAddress,
-                ""
-            );
+        TransparentUpgradeableProxy proxyEventManager =
+            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         eventManager = EventManager(address(proxyEventManager));
         eventManagerImplementation = new EventManager();
-        eventManagerAdmin = ProxyAdmin(
-            getProxyAdminAddress(address(proxyEventManager))
-        );
+        eventManagerAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyEventManager)));
 
         // Upgrade and initialize the implementations
         blsApkRegistryProxyAdmin.upgradeAndCall(
             ITransparentUpgradeableProxy(address(blsApkRegistry)),
             address(blsApkRegistryImplementation),
             abi.encodeWithSelector(
-                BLSApkRegistry.initialize.selector,
-                deployerAddress,
-                relayerManagerAddr,
-                address(proxyEventManager)
+                BLSApkRegistry.initialize.selector, deployerAddress, relayerManagerAddr, address(proxyEventManager)
             )
         );
 
@@ -70,17 +57,11 @@ contract deployEventScript is Script {
             ITransparentUpgradeableProxy(address(eventManager)),
             address(eventManagerImplementation),
             abi.encodeWithSelector(
-                EventManager.initialize.selector,
-                deployerAddress,
-                proxyBlsApkRegistry,
-                deployerAddress
+                EventManager.initialize.selector, deployerAddress, proxyBlsApkRegistry, deployerAddress
             )
         );
 
-        console.log(
-            "deploy proxyBlsApkRegistry:",
-            address(proxyBlsApkRegistry)
-        );
+        console.log("deploy proxyBlsApkRegistry:", address(proxyBlsApkRegistry));
         console.log("deploy proxyEventManager:", address(proxyEventManager));
         string memory path = "deployed_addresses.json";
         string memory data = string(
@@ -97,9 +78,7 @@ contract deployEventScript is Script {
         vm.stopBroadcast();
     }
 
-    function getProxyAdminAddress(
-        address proxy
-    ) internal view returns (address) {
+    function getProxyAdminAddress(address proxy) internal view returns (address) {
         address CHEATCODE_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
         Vm vm = Vm(CHEATCODE_ADDRESS);
 

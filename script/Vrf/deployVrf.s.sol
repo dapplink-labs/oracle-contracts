@@ -32,38 +32,25 @@ contract deployVrfScript is Script {
 
         // Deploy BLSApkRegistry proxy and delegate to a empty contract first
         emptyContract = new EmptyContract();
-        TransparentUpgradeableProxy proxyBlsApkRegistry = new TransparentUpgradeableProxy(
-                address(emptyContract),
-                deployerAddress,
-                ""
-            );
+        TransparentUpgradeableProxy proxyBlsApkRegistry =
+            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         blsApkRegistry = BLSApkRegistry(address(proxyBlsApkRegistry));
         blsApkRegistryImplementation = new BLSApkRegistry();
-        blsApkRegistryProxyAdmin = ProxyAdmin(
-            getProxyAdminAddress(address(proxyBlsApkRegistry))
-        );
+        blsApkRegistryProxyAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyBlsApkRegistry)));
 
         // Deploy VrfManager proxy and delegate to a empty contract first
-        TransparentUpgradeableProxy proxyVrfManager = new TransparentUpgradeableProxy(
-                address(emptyContract),
-                deployerAddress,
-                ""
-            );
+        TransparentUpgradeableProxy proxyVrfManager =
+            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         vrfManager = VrfManager(address(proxyVrfManager));
         vrfManagerImplementation = new VrfManager();
-        vrfManagerAdmin = ProxyAdmin(
-            getProxyAdminAddress(address(proxyVrfManager))
-        );
+        vrfManagerAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyVrfManager)));
 
         // Upgrade and initialize the implementations
         blsApkRegistryProxyAdmin.upgradeAndCall(
             ITransparentUpgradeableProxy(address(blsApkRegistry)),
             address(blsApkRegistryImplementation),
             abi.encodeWithSelector(
-                BLSApkRegistry.initialize.selector,
-                deployerAddress,
-                relayerManagerAddr,
-                address(proxyVrfManager)
+                BLSApkRegistry.initialize.selector, deployerAddress, relayerManagerAddr, address(proxyVrfManager)
             )
         );
 
@@ -71,17 +58,11 @@ contract deployVrfScript is Script {
             ITransparentUpgradeableProxy(address(vrfManager)),
             address(vrfManagerImplementation),
             abi.encodeWithSelector(
-                VrfManager.initialize.selector,
-                deployerAddress,
-                proxyBlsApkRegistry,
-                deployerAddress
+                VrfManager.initialize.selector, deployerAddress, proxyBlsApkRegistry, deployerAddress
             )
         );
 
-        console.log(
-            "deploy proxyBlsApkRegistry:",
-            address(proxyBlsApkRegistry)
-        );
+        console.log("deploy proxyBlsApkRegistry:", address(proxyBlsApkRegistry));
         console.log("deploy proxyVrfManager:", address(proxyVrfManager));
         string memory path = "deployed_addresses.json";
         string memory data = string(
@@ -98,9 +79,7 @@ contract deployVrfScript is Script {
         vm.stopBroadcast();
     }
 
-    function getProxyAdminAddress(
-        address proxy
-    ) internal view returns (address) {
+    function getProxyAdminAddress(address proxy) internal view returns (address) {
         address CHEATCODE_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
         Vm vm = Vm(CHEATCODE_ADDRESS);
 

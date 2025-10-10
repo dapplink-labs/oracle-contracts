@@ -29,30 +29,18 @@ contract deployOraclePodScript is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         emptyContract = new EmptyContract();
-        TransparentUpgradeableProxy proxyOraclePod = new TransparentUpgradeableProxy(
-                address(emptyContract),
-                deployerAddress,
-                ""
-            );
+        TransparentUpgradeableProxy proxyOraclePod =
+            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         oraclePod = OraclePod(address(proxyOraclePod));
         oraclePodImplementation = new OraclePod();
-        oraclePodAdmin = ProxyAdmin(
-            getProxyAdminAddress(address(proxyOraclePod))
-        );
+        oraclePodAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyOraclePod)));
 
-        console.log(
-            "oraclePodImplementation===",
-            address(oraclePodImplementation)
-        );
+        console.log("oraclePodImplementation===", address(oraclePodImplementation));
 
         oraclePodAdmin.upgradeAndCall(
             ITransparentUpgradeableProxy(address(oraclePod)),
             address(oraclePodImplementation),
-            abi.encodeWithSelector(
-                OraclePod.initialize.selector,
-                deployerAddress,
-                oracleManagerAddr
-            )
+            abi.encodeWithSelector(OraclePod.initialize.selector, deployerAddress, oracleManagerAddr)
         );
 
         //        OracleManager(oracleManagerAddr).addOraclePodToFillWhitelist(proxyOraclePod);
@@ -73,9 +61,7 @@ contract deployOraclePodScript is Script {
         vm.stopBroadcast();
     }
 
-    function getProxyAdminAddress(
-        address proxy
-    ) internal view returns (address) {
+    function getProxyAdminAddress(address proxy) internal view returns (address) {
         address CHEATCODE_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
         Vm vm = Vm(CHEATCODE_ADDRESS);
 

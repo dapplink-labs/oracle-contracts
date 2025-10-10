@@ -21,11 +21,7 @@ contract OraclePodTest is Test {
         vm.prank(deployer);
         logic = new OraclePod();
 
-        bytes memory initData = abi.encodeWithSelector(
-            OraclePod.initialize.selector,
-            deployer,
-            oracleManager
-        );
+        bytes memory initData = abi.encodeWithSelector(OraclePod.initialize.selector, deployer, oracleManager);
 
         vm.prank(deployer);
         ERC1967Proxy proxy = new ERC1967Proxy(address(logic), initData);
@@ -42,9 +38,7 @@ contract OraclePodTest is Test {
 
         // 非 oracleManager 调用失败
         vm.prank(other);
-        vm.expectRevert(
-            "OraclePod.onlyOracleManager: caller is not the oracle manager address"
-        );
+        vm.expectRevert("OraclePod.onlyOracleManager: caller is not the oracle manager address");
         pod.fillSymbolPrice(price);
 
         // oracleManager 调用成功
@@ -58,9 +52,7 @@ contract OraclePodTest is Test {
         string memory price = "1234";
 
         vm.prank(address(0xE5));
-        vm.expectRevert(
-            "OraclePod.onlyOracleManager: caller is not the oracle manager address"
-        );
+        vm.expectRevert("OraclePod.onlyOracleManager: caller is not the oracle manager address");
         pod.fillSymbolPrice(price);
 
         vm.prank(oracleManager);
@@ -168,20 +160,15 @@ contract OracleManagerTest is Test {
             Y: 18512095983377956955654133313299197583137445769983185530805027107069225976299
         });
 
-        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry
-            .PubkeyRegistrationParams({
-                pubkeyG1: pubKeyG1,
-                pubkeyG2: pubKeyG2,
-                pubkeyRegistrationSignature: signature
-            });
+        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry.PubkeyRegistrationParams({
+            pubkeyG1: pubKeyG1,
+            pubkeyG2: pubKeyG2,
+            pubkeyRegistrationSignature: signature
+        });
 
         // operator注册新的 pubkey
         vm.prank(operator);
-        bytes32 pubkeyHash = blsRegistry.registerBLSPublicKey(
-            operator,
-            params,
-            msgHash
-        );
+        bytes32 pubkeyHash = blsRegistry.registerBLSPublicKey(operator, params, msgHash);
 
         vm.prank(address(oracleManager));
         blsRegistry.registerOperator(address(operator));
@@ -189,18 +176,14 @@ contract OracleManagerTest is Test {
 
     function test_addOrRemoveOperatorWhitelist() public {
         vm.prank(address(0xE5));
-        vm.expectRevert(
-            "PodManager.onlyAggregatorManager: not the aggregator address"
-        );
+        vm.expectRevert("PodManager.onlyAggregatorManager: not the aggregator address");
         oracleManager.addOrRemoveOperatorWhitelist(operator, true);
 
         vm.prank(aggregator);
         oracleManager.addOrRemoveOperatorWhitelist(operator, true);
 
         vm.prank(aggregator);
-        vm.expectRevert(
-            "PodManager.addOperatorWhitelist: operator address is zero"
-        );
+        vm.expectRevert("PodManager.addOperatorWhitelist: operator address is zero");
         oracleManager.addOrRemoveOperatorWhitelist(address(0), true);
     }
 
@@ -213,23 +196,17 @@ contract OracleManagerTest is Test {
         oracleManager.setAggregatorAddress(aggregator);
 
         vm.prank(owner);
-        vm.expectRevert(
-            "PodManager.addAggregator: aggregatorAddress address is zero"
-        );
+        vm.expectRevert("PodManager.addAggregator: aggregatorAddress address is zero");
         oracleManager.setAggregatorAddress(address(0));
     }
 
     function test_addOrRemoveOraclePodToFillWhitelist() public {
         vm.prank(address(0xE5));
-        vm.expectRevert(
-            "PodManager.onlyAggregatorManager: not the aggregator address"
-        );
+        vm.expectRevert("PodManager.onlyAggregatorManager: not the aggregator address");
         oracleManager.addPodToFillWhitelist(address(oraclePod));
 
         vm.prank(address(0xE5));
-        vm.expectRevert(
-            "PodManager.onlyAggregatorManager: not the aggregator address"
-        );
+        vm.expectRevert("PodManager.onlyAggregatorManager: not the aggregator address");
         oracleManager.removePodToFillWhitelist(address(oraclePod));
 
         vm.prank(aggregator);
@@ -243,21 +220,15 @@ contract OracleManagerTest is Test {
         oracleManager.addOrRemoveOperatorWhitelist(operator, true);
 
         vm.prank(address(0xE1));
-        vm.expectRevert(
-            "PodManager.registerOperator: this address have not permission to register "
-        );
+        vm.expectRevert("PodManager.registerOperator: this address have not permission to register ");
         oracleManager.registerOperator("http://node.url");
 
         vm.prank(operator);
-        vm.expectRevert(
-            "BLSApkRegistry.registerBLSPublicKey: Operator have already register"
-        );
+        vm.expectRevert("BLSApkRegistry.registerBLSPublicKey: Operator have already register");
         oracleManager.registerOperator("http://node.url");
 
         vm.prank(address(0xE1));
-        vm.expectRevert(
-            "PodManager.registerOperator: this address have not permission to register "
-        );
+        vm.expectRevert("PodManager.registerOperator: this address have not permission to register ");
         oracleManager.deRegisterOperator();
 
         vm.prank(operator);
@@ -267,9 +238,7 @@ contract OracleManagerTest is Test {
         oracleManager.addOrRemoveOperatorWhitelist(operator, false);
 
         vm.prank(operator);
-        vm.expectRevert(
-            "PodManager.registerOperator: this address have not permission to register "
-        );
+        vm.expectRevert("PodManager.registerOperator: this address have not permission to register ");
         oracleManager.registerOperator("http://node.url");
     }
 
@@ -277,26 +246,24 @@ contract OracleManagerTest is Test {
         vm.prank(aggregator);
         oracleManager.addPodToFillWhitelist(address(oraclePod));
 
-        IBLSApkRegistry.NonSignerAndSignature
-            memory noSignerAndSignature = IBLSApkRegistry
-                .NonSignerAndSignature({
-                    nonSignerPubkeys: new BN254.G1Point[](0),
-                    apkG2: BN254.G2Point({
-                        X: [
-                            6814450613988925037276906495559354220267038225890288520888556922179861427221,
-                            11097154366204527428819849175191533397314611771099148982308553889852330000313
-                        ],
-                        Y: [
-                            20799884507081215979545766399242808376431798816319714422985505673585902041706,
-                            13670248609089265475970799020243713070902269374832615406626549692922451548915
-                        ]
-                    }),
-                    sigma: BN254.G1Point({
-                        X: 15194033674394012071916983731564882240605499108993224505298052923469296043512,
-                        Y: 839159203127434969034550706910060963494405052210926279105817372573420151443
-                    }),
-                    totalStake: 888
-                });
+        IBLSApkRegistry.NonSignerAndSignature memory noSignerAndSignature = IBLSApkRegistry.NonSignerAndSignature({
+            nonSignerPubkeys: new BN254.G1Point[](0),
+            apkG2: BN254.G2Point({
+                X: [
+                    6814450613988925037276906495559354220267038225890288520888556922179861427221,
+                    11097154366204527428819849175191533397314611771099148982308553889852330000313
+                ],
+                Y: [
+                    20799884507081215979545766399242808376431798816319714422985505673585902041706,
+                    13670248609089265475970799020243713070902269374832615406626549692922451548915
+                ]
+            }),
+            sigma: BN254.G1Point({
+                X: 15194033674394012071916983731564882240605499108993224505298052923469296043512,
+                Y: 839159203127434969034550706910060963494405052210926279105817372573420151443
+            }),
+            totalStake: 888
+        });
         IOracleManager.OracleBatch memory batch = IOracleManager.OracleBatch({
             msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
             blockNumber: block.number - 1,
@@ -305,36 +272,30 @@ contract OracleManagerTest is Test {
         });
 
         vm.prank(aggregator);
-        oracleManager.fillSymbolPriceWithSignature(
-            oraclePod,
-            batch,
-            noSignerAndSignature
-        );
+        oracleManager.fillSymbolPriceWithSignature(oraclePod, batch, noSignerAndSignature);
 
         assertEq(oraclePod.getSymbolPrice(), "888");
     }
 
     function testFillSymbolPriceWithoutWhitelistOrAuthority() public {
-        IBLSApkRegistry.NonSignerAndSignature
-            memory noSignerAndSignature = IBLSApkRegistry
-                .NonSignerAndSignature({
-                    nonSignerPubkeys: new BN254.G1Point[](0),
-                    apkG2: BN254.G2Point({
-                        X: [
-                            19552866287184064427995511006223057169680536518603642638640105365054342788017,
-                            19912786774583403697047133238687463296134677575618298225286334615015816916116
-                        ],
-                        Y: [
-                            2970994197396269892653525920024039859830728356246595152296683945713431676344,
-                            18119535013136907197909765078809655896321461883746857179927989514870514777799
-                        ]
-                    }),
-                    sigma: BN254.G1Point({
-                        X: 15723530600246276940894768360396890326319571568844052976858037242805072605559,
-                        Y: 11650315804718231422577338154702931145725917843701074925949828011449296498014
-                    }),
-                    totalStake: 888
-                });
+        IBLSApkRegistry.NonSignerAndSignature memory noSignerAndSignature = IBLSApkRegistry.NonSignerAndSignature({
+            nonSignerPubkeys: new BN254.G1Point[](0),
+            apkG2: BN254.G2Point({
+                X: [
+                    19552866287184064427995511006223057169680536518603642638640105365054342788017,
+                    19912786774583403697047133238687463296134677575618298225286334615015816916116
+                ],
+                Y: [
+                    2970994197396269892653525920024039859830728356246595152296683945713431676344,
+                    18119535013136907197909765078809655896321461883746857179927989514870514777799
+                ]
+            }),
+            sigma: BN254.G1Point({
+                X: 15723530600246276940894768360396890326319571568844052976858037242805072605559,
+                Y: 11650315804718231422577338154702931145725917843701074925949828011449296498014
+            }),
+            totalStake: 888
+        });
         IOracleManager.OracleBatch memory batch = IOracleManager.OracleBatch({
             msgHash: 0x3f0a377ba0a4a460ecb616f6507ce0d8cfa3e704025d4fda3ed0c5ca05468728,
             blockNumber: block.number - 1,
@@ -343,23 +304,11 @@ contract OracleManagerTest is Test {
         });
 
         vm.prank(address(0xE1));
-        vm.expectRevert(
-            "PodManager.onlyAggregatorManager: not the aggregator address"
-        );
-        oracleManager.fillSymbolPriceWithSignature(
-            oraclePod,
-            batch,
-            noSignerAndSignature
-        );
+        vm.expectRevert("PodManager.onlyAggregatorManager: not the aggregator address");
+        oracleManager.fillSymbolPriceWithSignature(oraclePod, batch, noSignerAndSignature);
 
         vm.prank(aggregator);
-        vm.expectRevert(
-            "PodManager.onlyPodWhitelistedForFill: pod not whitelisted"
-        );
-        oracleManager.fillSymbolPriceWithSignature(
-            oraclePod,
-            batch,
-            noSignerAndSignature
-        );
+        vm.expectRevert("PodManager.onlyPodWhitelistedForFill: pod not whitelisted");
+        oracleManager.fillSymbolPriceWithSignature(oraclePod, batch, noSignerAndSignature);
     }
 }

@@ -12,17 +12,11 @@ contract EventPod is Initializable, OwnableUpgradeable, EventPodStorage {
     }
 
     modifier onlyEventManager() {
-        require(
-            msg.sender == eventManager,
-            "EventPod.onlyEventManager: caller is not the event manager address"
-        );
+        require(msg.sender == eventManager, "EventPod.onlyEventManager: caller is not the event manager address");
         _;
     }
 
-    function initialize(
-        address _initialOwner,
-        address _eventManager
-    ) external initializer {
+    function initialize(address _initialOwner, address _eventManager) external initializer {
         __Ownable_init(_initialOwner);
         eventManager = _eventManager;
     }
@@ -40,19 +34,10 @@ contract EventPod is Initializable, OwnableUpgradeable, EventPodStorage {
             predictNegSide: _predictNegSide,
             winner: "unknown"
         });
-        emit CreatePredictEvent(
-            _requestId,
-            _eventDescribe,
-            _predictPosSide,
-            _predictNegSide,
-            address(this)
-        );
+        emit CreatePredictEvent(_requestId, _eventDescribe, _predictPosSide, _predictNegSide, address(this));
     }
 
-    function submitEventResult(
-        uint256 _requestId,
-        string memory _winner
-    ) external onlyEventManager {
+    function submitEventResult(uint256 _requestId, string memory _winner) external onlyEventManager {
         predictEventMapping[_requestId].winner = _winner;
         emit PredictEventResult(
             _requestId,
@@ -62,16 +47,10 @@ contract EventPod is Initializable, OwnableUpgradeable, EventPodStorage {
         );
     }
 
-    function fetchEventResult(
-        uint256 requestId
-    )
+    function fetchEventResult(uint256 requestId)
         external
         view
-        returns (
-            string memory predictPosSide,
-            string memory predictNegSid,
-            string memory winner
-        )
+        returns (string memory predictPosSide, string memory predictNegSid, string memory winner)
     {
         return (
             predictEventMapping[requestId].predictPosSide,

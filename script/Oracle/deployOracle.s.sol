@@ -31,38 +31,25 @@ contract deployOracleScript is Script {
 
         // Deploy BLSApkRegistry proxy and delegate to a empty contract first
         emptyContract = new EmptyContract();
-        TransparentUpgradeableProxy proxyBlsApkRegistry = new TransparentUpgradeableProxy(
-                address(emptyContract),
-                deployerAddress,
-                ""
-            );
+        TransparentUpgradeableProxy proxyBlsApkRegistry =
+            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         blsApkRegistry = BLSApkRegistry(address(proxyBlsApkRegistry));
         blsApkRegistryImplementation = new BLSApkRegistry();
-        blsApkRegistryProxyAdmin = ProxyAdmin(
-            getProxyAdminAddress(address(proxyBlsApkRegistry))
-        );
+        blsApkRegistryProxyAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyBlsApkRegistry)));
 
         // Deploy OracleManager proxy and delegate to a empty contract first
-        TransparentUpgradeableProxy proxyOracleManager = new TransparentUpgradeableProxy(
-                address(emptyContract),
-                deployerAddress,
-                ""
-            );
+        TransparentUpgradeableProxy proxyOracleManager =
+            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         oracleManager = OracleManager(address(proxyOracleManager));
         oracleManagerImplementation = new OracleManager();
-        oracleManagerAdmin = ProxyAdmin(
-            getProxyAdminAddress(address(proxyOracleManager))
-        );
+        oracleManagerAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyOracleManager)));
 
         // Upgrade and initialize the implementations
         blsApkRegistryProxyAdmin.upgradeAndCall(
             ITransparentUpgradeableProxy(address(blsApkRegistry)),
             address(blsApkRegistryImplementation),
             abi.encodeWithSelector(
-                BLSApkRegistry.initialize.selector,
-                deployerAddress,
-                relayerManagerAddr,
-                address(proxyOracleManager)
+                BLSApkRegistry.initialize.selector, deployerAddress, relayerManagerAddr, address(proxyOracleManager)
             )
         );
 
@@ -70,17 +57,11 @@ contract deployOracleScript is Script {
             ITransparentUpgradeableProxy(address(oracleManager)),
             address(oracleManagerImplementation),
             abi.encodeWithSelector(
-                OracleManager.initialize.selector,
-                deployerAddress,
-                proxyBlsApkRegistry,
-                deployerAddress
+                OracleManager.initialize.selector, deployerAddress, proxyBlsApkRegistry, deployerAddress
             )
         );
 
-        console.log(
-            "deploy proxyBlsApkRegistry:",
-            address(proxyBlsApkRegistry)
-        );
+        console.log("deploy proxyBlsApkRegistry:", address(proxyBlsApkRegistry));
         console.log("deploy proxyOracleManager:", address(proxyOracleManager));
         string memory path = "deployed_addresses.json";
         string memory data = string(
@@ -97,9 +78,7 @@ contract deployOracleScript is Script {
         vm.stopBroadcast();
     }
 
-    function getProxyAdminAddress(
-        address proxy
-    ) internal view returns (address) {
+    function getProxyAdminAddress(address proxy) internal view returns (address) {
         address CHEATCODE_ADDRESS = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
         Vm vm = Vm(CHEATCODE_ADDRESS);
 

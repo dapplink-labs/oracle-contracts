@@ -3,11 +3,9 @@ pragma solidity ^0.8.20;
 
 library BN254 {
     // modulus for the underlying field F_p of the elliptic curve
-    uint256 internal constant FP_MODULUS =
-    21888242871839275222246405745257275088696311157297823662689037894645226208583;
+    uint256 internal constant FP_MODULUS = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
     // modulus for the underlying field F_r of the elliptic curve
-    uint256 internal constant FR_MODULUS =
-    21888242871839275222246405745257275088548364400416034343698204186575808495617;
+    uint256 internal constant FR_MODULUS = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
     struct G1Point {
         uint256 X;
@@ -51,8 +49,7 @@ library BN254 {
         return G2Point([nG2x1, nG2x0], [nG2y1, nG2y0]);
     }
 
-    bytes32 internal constant powersOfTauMerkleRoot =
-    0x22c998e49752bbb1918ba87d6d59dd0e83620a311ba91dd4b2cc84990b31b56f;
+    bytes32 internal constant powersOfTauMerkleRoot = 0x22c998e49752bbb1918ba87d6d59dd0e83620a311ba91dd4b2cc84990b31b56f;
 
     /**
      * @param p Some point in G1.
@@ -81,11 +78,9 @@ library BN254 {
         // solium-disable-next-line security/no-inline-assembly
         assembly {
             success := staticcall(sub(gas(), 2000), 6, input, 0x80, r, 0x40)
-        // Use "invalid" to make gas estimation work
+            // Use "invalid" to make gas estimation work
             switch success
-            case 0 {
-                invalid()
-            }
+            case 0 { invalid() }
         }
 
         require(success, "ec-add-failed");
@@ -98,10 +93,10 @@ library BN254 {
      * @dev this function is only safe to use if the scalar is 9 bits or less
      */
     function scalar_mul_tiny(BN254.G1Point memory p, uint16 s) internal view returns (BN254.G1Point memory) {
-        require(s < 2**9, "scalar-too-large");
+        require(s < 2 ** 9, "scalar-too-large");
 
         // if s is 1 return p
-        if(s == 1) {
+        if (s == 1) {
             return p;
         }
 
@@ -115,16 +110,16 @@ library BN254 {
         uint8 i = 0;
 
         //loop until we reach the most significant bit
-        while(s >= m){
+        while (s >= m) {
             unchecked {
-            // if the  current bit is 1, add the 2^n*p to the accumulated product
+                // if the  current bit is 1, add the 2^n*p to the accumulated product
                 if ((s >> i) & 1 == 1) {
                     acc = plus(acc, p2n);
                 }
-            // double the 2^n*p for the next iteration
+                // double the 2^n*p for the next iteration
                 p2n = plus(p2n, p2n);
 
-            // increment the index and double the value of the most significant bit
+                // increment the index and double the value of the most significant bit
                 m <<= 1;
                 ++i;
             }
@@ -148,11 +143,9 @@ library BN254 {
         // solium-disable-next-line security/no-inline-assembly
         assembly {
             success := staticcall(sub(gas(), 2000), 7, input, 0x60, r, 0x40)
-        // Use "invalid" to make gas estimation work
+            // Use "invalid" to make gas estimation work
             switch success
-            case 0 {
-                invalid()
-            }
+            case 0 { invalid() }
         }
         require(success, "ec-mul-failed");
     }
@@ -163,12 +156,11 @@ library BN254 {
      *         For example,
      *         pairing([P1(), P1().negate()], [P2(), P2()]) should return true.
      */
-    function pairing(
-        G1Point memory a1,
-        G2Point memory a2,
-        G1Point memory b1,
-        G2Point memory b2
-    ) internal view returns (bool) {
+    function pairing(G1Point memory a1, G2Point memory a2, G1Point memory b1, G2Point memory b2)
+        internal
+        view
+        returns (bool)
+    {
         G1Point[2] memory p1 = [a1, b1];
         G2Point[2] memory p2 = [a2, b2];
 
@@ -190,11 +182,9 @@ library BN254 {
         // solium-disable-next-line security/no-inline-assembly
         assembly {
             success := staticcall(sub(gas(), 2000), 8, input, mul(12, 0x20), out, 0x20)
-        // Use "invalid" to make gas estimation work
+            // Use "invalid" to make gas estimation work
             switch success
-            case 0 {
-                invalid()
-            }
+            case 0 { invalid() }
         }
 
         require(success, "pairing-opcode-failed");
@@ -206,13 +196,11 @@ library BN254 {
      * @notice This function is functionally the same as pairing(), however it specifies a gas limit
      *         the user can set, as a precompile may use the entire gas budget if it reverts.
      */
-    function safePairing(
-        G1Point memory a1,
-        G2Point memory a2,
-        G1Point memory b1,
-        G2Point memory b2,
-        uint256 pairingGas
-    ) internal view returns (bool, bool) {
+    function safePairing(G1Point memory a1, G2Point memory a2, G1Point memory b1, G2Point memory b2, uint256 pairingGas)
+        internal
+        view
+        returns (bool, bool)
+    {
         G1Point[2] memory p1 = [a1, b1];
         G2Point[2] memory p2 = [a2, b2];
 
@@ -254,9 +242,7 @@ library BN254 {
 
     /// @return the keccak256 hash of the G2 Point
     /// @dev used for BLS signatures
-    function hashG2Point(
-        BN254.G2Point memory pk
-    ) internal pure returns (bytes32) {
+    function hashG2Point(BN254.G2Point memory pk) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(pk.X[0], pk.X[1], pk.Y[0], pk.Y[1]));
     }
 
@@ -273,7 +259,7 @@ library BN254 {
             (beta, y) = findYFromX(x);
 
             // y^2 == beta
-            if( beta == mulmod(y, y, FP_MODULUS) ) {
+            if (beta == mulmod(y, y, FP_MODULUS)) {
                 return G1Point(x, y);
             }
 
@@ -303,7 +289,7 @@ library BN254 {
     function expMod(uint256 _base, uint256 _exponent, uint256 _modulus) internal view returns (uint256 retval) {
         bool success;
         uint256[1] memory output;
-        uint[6] memory input;
+        uint256[6] memory input;
         input[0] = 0x20; // baseLen = new(big.Int).SetBytes(getData(input, 0, 32))
         input[1] = 0x20; // expLen  = new(big.Int).SetBytes(getData(input, 32, 32))
         input[2] = 0x20; // modLen  = new(big.Int).SetBytes(getData(input, 64, 32))
@@ -312,11 +298,9 @@ library BN254 {
         input[5] = _modulus;
         assembly {
             success := staticcall(sub(gas(), 2000), 5, input, 0xc0, output, 0x20)
-        // Use "invalid" to make gas estimation work
+            // Use "invalid" to make gas estimation work
             switch success
-            case 0 {
-                invalid()
-            }
+            case 0 { invalid() }
         }
         require(success, "BN254.expMod: call failure");
         return output[0];

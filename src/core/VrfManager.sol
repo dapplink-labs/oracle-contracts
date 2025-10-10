@@ -16,11 +16,10 @@ contract VrfManager is OwnableUpgradeable, PodManager, VrfManagerStorage {
         _disableInitializers();
     }
 
-    function initialize(
-        address _initialOwner,
-        address _blsApkRegistry,
-        address _aggregatorAddress
-    ) external initializer {
+    function initialize(address _initialOwner, address _blsApkRegistry, address _aggregatorAddress)
+        external
+        initializer
+    {
         __Ownable_init(_initialOwner);
         __PodManager_init(_blsApkRegistry, _aggregatorAddress);
     }
@@ -29,28 +28,13 @@ contract VrfManager is OwnableUpgradeable, PodManager, VrfManagerStorage {
         IVrfPod vrfPod,
         VrfRandomWords calldata vrfRandomWords,
         IBLSApkRegistry.NonSignerAndSignature memory oracleNonSignerAndSignature
-    )
-        external
-        onlyAggregatorManager
-        onlyPodWhitelistedForFill(address(vrfPod))
-    {
-        (uint256 totalStaking, bytes32 signatoryRecordHash) = blsApkRegistry
-            .checkSignatures(
-                vrfRandomWords.msgHash,
-                vrfRandomWords.blockNumber,
-                oracleNonSignerAndSignature
-            );
-
-        vrfPod.fulfillRandomWords(
-            vrfRandomWords.requestId,
-            vrfRandomWords._randomWords
+    ) external onlyAggregatorManager onlyPodWhitelistedForFill(address(vrfPod)) {
+        (uint256 totalStaking, bytes32 signatoryRecordHash) = blsApkRegistry.checkSignatures(
+            vrfRandomWords.msgHash, vrfRandomWords.blockNumber, oracleNonSignerAndSignature
         );
 
-        emit VerifyVrfSig(
-            vrfRandomWords.requestId,
-            totalStaking,
-            signatoryRecordHash,
-            vrfRandomWords._randomWords
-        );
+        vrfPod.fulfillRandomWords(vrfRandomWords.requestId, vrfRandomWords._randomWords);
+
+        emit VerifyVrfSig(vrfRandomWords.requestId, totalStaking, signatoryRecordHash, vrfRandomWords._randomWords);
     }
 }
