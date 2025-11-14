@@ -16,11 +16,10 @@ contract OracleManager is OwnableUpgradeable, PodManager, OracleManagerStorage, 
         _disableInitializers();
     }
 
-    function initialize(
-        address _initialOwner,
-        address _blsApkRegistry,
-        address _aggregatorAddress
-    ) external initializer {
+    function initialize(address _initialOwner, address _blsApkRegistry, address _aggregatorAddress)
+        external
+        initializer
+    {
         __Ownable_init(_initialOwner);
         __PodManager_init(_blsApkRegistry, _aggregatorAddress);
         confirmBatchId = 0;
@@ -29,12 +28,10 @@ contract OracleManager is OwnableUpgradeable, PodManager, OracleManagerStorage, 
     function fillSymbolPriceWithSignature(
         IOraclePod oraclePod,
         OracleBatch calldata oracleBatch,
-        IBLSApkRegistry.OracleNonSignerAndSignature memory oracleNonSignerAndSignature
+        IBLSApkRegistry.NonSignerAndSignature memory oracleNonSignerAndSignature
     ) external onlyAggregatorManager onlyPodWhitelistedForFill(address(oraclePod)) {
-        (
-            uint256 totalStaking,
-            bytes32 signatoryRecordHash
-        ) = blsApkRegistry.checkSignatures(oracleBatch.msgHash, oracleBatch.blockNumber, oracleNonSignerAndSignature);
+        (uint256 totalStaking, bytes32 signatoryRecordHash) =
+            blsApkRegistry.checkSignatures(oracleBatch.msgHash, oracleBatch.blockNumber, oracleNonSignerAndSignature);
 
         string memory symbolPrice = oracleBatch.symbolPrice;
 

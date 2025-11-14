@@ -5,10 +5,10 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import { EmptyContract } from "../src/utils/EmptyContract.sol";
-import { BLSApkRegistry } from "../src/bls/BLSApkRegistry.sol";
-import { OracleManager } from "../src/core/OracleManager.sol";
-import { console, Script } from "forge-std/Script.sol";
+import {EmptyContract} from "../../src/utils/EmptyContract.sol";
+import {BLSApkRegistry} from "../../src/bls/BLSApkRegistry.sol";
+import {OracleManager} from "../../src/core/OracleManager.sol";
+import {console, Script} from "forge-std/Script.sol";
 
 contract deployOracleScript is Script {
     EmptyContract public emptyContract;
@@ -24,32 +24,32 @@ contract deployOracleScript is Script {
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address relayerManagerAddr =  vm.envAddress("RELAYER_MANAGER");
+        address relayerManagerAddr = vm.envAddress("RELAYER_MANAGER");
 
         address deployerAddress = vm.addr(deployerPrivateKey);
         vm.startBroadcast(deployerPrivateKey);
 
+        // Deploy BLSApkRegistry proxy and delegate to a empty contract first
         emptyContract = new EmptyContract();
-        TransparentUpgradeableProxy proxyBlsApkRegistry = new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
+        TransparentUpgradeableProxy proxyBlsApkRegistry =
+            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         blsApkRegistry = BLSApkRegistry(address(proxyBlsApkRegistry));
         blsApkRegistryImplementation = new BLSApkRegistry();
         blsApkRegistryProxyAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyBlsApkRegistry)));
 
-
-        TransparentUpgradeableProxy proxyOracleManager = new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
+        // Deploy OracleManager proxy and delegate to a empty contract first
+        TransparentUpgradeableProxy proxyOracleManager =
+            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         oracleManager = OracleManager(address(proxyOracleManager));
         oracleManagerImplementation = new OracleManager();
         oracleManagerAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyOracleManager)));
 
-
+        // Upgrade and initialize the implementations
         blsApkRegistryProxyAdmin.upgradeAndCall(
             ITransparentUpgradeableProxy(address(blsApkRegistry)),
             address(blsApkRegistryImplementation),
             abi.encodeWithSelector(
-                BLSApkRegistry.initialize.selector,
-                deployerAddress,
-                relayerManagerAddr,
-                address(proxyOracleManager)
+                BLSApkRegistry.initialize.selector, deployerAddress, relayerManagerAddr, address(proxyOracleManager)
             )
         );
 
@@ -57,20 +57,23 @@ contract deployOracleScript is Script {
             ITransparentUpgradeableProxy(address(oracleManager)),
             address(oracleManagerImplementation),
             abi.encodeWithSelector(
-                OracleManager.initialize.selector,
-                deployerAddress,
-                proxyBlsApkRegistry,
-                deployerAddress
+                OracleManager.initialize.selector, deployerAddress, proxyBlsApkRegistry, deployerAddress
             )
         );
 
         console.log("deploy proxyBlsApkRegistry:", address(proxyBlsApkRegistry));
         console.log("deploy proxyOracleManager:", address(proxyOracleManager));
         string memory path = "deployed_addresses.json";
-        string memory data = string(abi.encodePacked(
-            '{"proxyBlsApkRegistry": "', vm.toString(address(proxyBlsApkRegistry)), '", ',
-            '"proxyOracleManager": "', vm.toString(address(proxyOracleManager)), '"}'
-        ));
+        string memory data = string(
+            abi.encodePacked(
+                '{"proxyBlsApkRegistry": "',
+                vm.toString(address(proxyBlsApkRegistry)),
+                '", ',
+                '"proxyOracleManager": "',
+                vm.toString(address(proxyOracleManager)),
+                '"}'
+            )
+        );
         vm.writeJson(data, path);
         vm.stopBroadcast();
     }

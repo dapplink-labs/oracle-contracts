@@ -4,8 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
 
-import { OraclePodStorage } from "./OraclePodStorage.sol";
-
+import {OraclePodStorage} from "./OraclePodStorage.sol";
 
 contract OraclePod is Initializable, OwnableUpgradeable, OraclePodStorage {
     constructor() {
@@ -13,9 +12,7 @@ contract OraclePod is Initializable, OwnableUpgradeable, OraclePodStorage {
     }
 
     modifier onlyOracleManager() {
-        require (
-            msg.sender == oracleManager, "OraclePod.onlyOracleManager: caller is not the oracle manager address"
-        );
+        require(msg.sender == oracleManager, "OraclePod.onlyOracleManager: caller is not the oracle manager address");
         _;
     }
 
