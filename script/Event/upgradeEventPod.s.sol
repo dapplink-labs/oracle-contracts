@@ -2,14 +2,14 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Vm.sol";
-import {console, Script} from "forge-std/Script.sol";
+import { console, Script } from "forge-std/Script.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import {EmptyContract} from "../../src/utils/EmptyContract.sol";
-import {EventPod} from "../../src/pod/EventPod.sol";
-import {IEventManager} from "../../src/interfaces/IEventManager.sol";
-import {IEventPod} from "../../src/interfaces/IEventPod.sol";
+import { EmptyContract } from "../../src/utils/EmptyContract.sol";
+import { EventPod } from "../../src/pod/EventPod.sol";
+import { IEventManager } from "../../src/interfaces/IEventManager.sol";
+import { IEventPod } from "../../src/interfaces/IEventPod.sol";
 
 contract upgradeEventPodScript is Script {
     address public ORACLE_POD = vm.envAddress("ORACLE_POD");
@@ -32,9 +32,7 @@ contract upgradeEventPodScript is Script {
 
         console.log("New EventPod implementation:", address(newEventPodImplementation));
 
-        messageManagerProxyAdmin.upgradeAndCall(
-            ITransparentUpgradeableProxy(ORACLE_POD), address(newEventPodImplementation), ""
-        );
+        messageManagerProxyAdmin.upgradeAndCall(ITransparentUpgradeableProxy(ORACLE_POD), address(newEventPodImplementation), "");
 
         console.log("Upgrade completed successfully!");
         vm.stopBroadcast();

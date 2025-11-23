@@ -7,4 +7,6 @@ import "../interfaces/IBLSApkRegistry.sol";
 import "../interfaces/IVrfPod.sol";
 import "../interfaces/IVrfManager.sol";
 
-abstract contract VrfManagerStorage is Initializable, IVrfManager {}
+abstract contract VrfManagerStorage is Initializable, IVrfManager {
+    uint256[50] private __gap;
+}

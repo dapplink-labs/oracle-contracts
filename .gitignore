@@ -14,5 +14,6 @@ docs/
 .env
 ./lib
 .idea
+.vscode/
 
 deployed_addresses.json

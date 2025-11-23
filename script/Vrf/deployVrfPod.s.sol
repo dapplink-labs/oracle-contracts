@@ -2,16 +2,16 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Vm.sol";
-import {console, Script} from "forge-std/Script.sol";
+import { console, Script } from "forge-std/Script.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import {EmptyContract} from "../../src/utils/EmptyContract.sol";
-import {VrfPod} from "../../src/pod/VrfPod.sol";
-import {VrfManager} from "../../src/core/VrfManager.sol";
+import { EmptyContract } from "../../src/utils/EmptyContract.sol";
+import { VrfPod } from "../../src/pod/VrfPod.sol";
+import { VrfManager } from "../../src/core/VrfManager.sol";
 
-import {IVrfManager} from "../../src/interfaces/IVrfManager.sol";
-import {IVrfPod} from "../../src/interfaces/IVrfPod.sol";
+import { IVrfManager } from "../../src/interfaces/IVrfManager.sol";
+import { IVrfPod } from "../../src/interfaces/IVrfPod.sol";
 
 contract deployVrfPodScript is Script {
     EmptyContract public emptyContract;
@@ -30,34 +30,20 @@ contract deployVrfPodScript is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         emptyContract = new EmptyContract();
-        TransparentUpgradeableProxy proxyVrfPod =
-            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
+        TransparentUpgradeableProxy proxyVrfPod = new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         vrfPod = VrfPod(address(proxyVrfPod));
         vrfPodImplementation = new VrfPod();
         vrfPodAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyVrfPod)));
 
         console.log("vrfPodImplementation===", address(vrfPodImplementation));
 
-        vrfPodAdmin.upgradeAndCall(
-            ITransparentUpgradeableProxy(address(vrfPod)),
-            address(vrfPodImplementation),
-            abi.encodeWithSelector(VrfPod.initialize.selector, deployerAddress, vrfManagerAddr)
-        );
+        vrfPodAdmin.upgradeAndCall(ITransparentUpgradeableProxy(address(vrfPod)), address(vrfPodImplementation), abi.encodeWithSelector(VrfPod.initialize.selector, deployerAddress, vrfManagerAddr));
 
         // VrfManager(vrfManagerAddr).addVrfPodToFillWhitelist(proxyVrfPod);
 
         console.log("deploy proxyVrfPod:", address(proxyVrfPod));
         string memory path = "deployed_addresses.json";
-        string memory data = string(
-            abi.encodePacked(
-                '{"proxyVrfPod": "',
-                vm.toString(address(proxyVrfPod)),
-                '", ',
-                '"vrfPodImplementation": "',
-                vm.toString(address(vrfPodImplementation)),
-                '"}'
-            )
-        );
+        string memory data = string(abi.encodePacked('{"proxyVrfPod": "', vm.toString(address(proxyVrfPod)), '", ', '"vrfPodImplementation": "', vm.toString(address(vrfPodImplementation)), '"}'));
         vm.writeJson(data, path);
         vm.stopBroadcast();
     }

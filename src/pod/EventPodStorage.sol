@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {IEventPod} from "../interfaces/IEventPod.sol";
+import { IEventPod } from "../interfaces/IEventPod.sol";
 
 abstract contract EventPodStorage is IEventPod {
     struct PredictEventInfo {
@@ -16,5 +16,5 @@ abstract contract EventPodStorage is IEventPod {
 
     mapping(uint256 => PredictEventInfo) public predictEventMapping;
 
-    uint256[100] private slot;
+    uint256[100] private __gap;
 }

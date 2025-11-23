@@ -2,16 +2,30 @@
 src = "src"
 out = "out"
 libs = ["lib"]
-
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
-solc = "0.8.22"
-# https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades
 ffi = true
 ast = true
 build_info = true
 extra_output = ["storageLayout"]
 fs_permissions = [{ access = "read-write", path = "./"}]
 
-[rpc_endpoints]
-sepolia = "${SEPOLIA_RPC_URL}"
+solc_version = "0.8.22"
+optimizer = true
+optimizer_runs = 200
+via_ir = true
+evm_version = "cancun"
 
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "@openzeppelin-upgrades/=lib/openzeppelin-contracts-upgradeable/",
+    "v3-core/=lib/v3-core/",
+    "@uniswap/v3-core/=lib/v3-core/"
+]
+
+[fmt]
+line_length = 500
+tab_width = 4
+bracket_spacing = true
+int_types = "preserve"
+multiline_fn_args = "preserve"
+multiline_fn_calls = "preserve"

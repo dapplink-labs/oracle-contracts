@@ -5,10 +5,10 @@ import "forge-std/Vm.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import {EmptyContract} from "../../src/utils/EmptyContract.sol";
-import {BLSApkRegistry} from "../../src/bls/BLSApkRegistry.sol";
-import {VrfManager} from "../../src/core/VrfManager.sol";
-import {console, Script} from "forge-std/Script.sol";
+import { EmptyContract } from "../../src/utils/EmptyContract.sol";
+import { BLSApkRegistry } from "../../src/bls/BLSApkRegistry.sol";
+import { VrfManager } from "../../src/core/VrfManager.sol";
+import { console, Script } from "forge-std/Script.sol";
 
 contract deployVrfScript is Script {
     EmptyContract public emptyContract;
@@ -32,49 +32,26 @@ contract deployVrfScript is Script {
 
         // Deploy BLSApkRegistry proxy and delegate to a empty contract first
         emptyContract = new EmptyContract();
-        TransparentUpgradeableProxy proxyBlsApkRegistry =
-            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
+        TransparentUpgradeableProxy proxyBlsApkRegistry = new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         blsApkRegistry = BLSApkRegistry(address(proxyBlsApkRegistry));
         blsApkRegistryImplementation = new BLSApkRegistry();
         blsApkRegistryProxyAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyBlsApkRegistry)));
 
         // Deploy VrfManager proxy and delegate to a empty contract first
-        TransparentUpgradeableProxy proxyVrfManager =
-            new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
+        TransparentUpgradeableProxy proxyVrfManager = new TransparentUpgradeableProxy(address(emptyContract), deployerAddress, "");
         vrfManager = VrfManager(address(proxyVrfManager));
         vrfManagerImplementation = new VrfManager();
         vrfManagerAdmin = ProxyAdmin(getProxyAdminAddress(address(proxyVrfManager)));
 
         // Upgrade and initialize the implementations
-        blsApkRegistryProxyAdmin.upgradeAndCall(
-            ITransparentUpgradeableProxy(address(blsApkRegistry)),
-            address(blsApkRegistryImplementation),
-            abi.encodeWithSelector(
-                BLSApkRegistry.initialize.selector, deployerAddress, relayerManagerAddr, address(proxyVrfManager)
-            )
-        );
+        blsApkRegistryProxyAdmin.upgradeAndCall(ITransparentUpgradeableProxy(address(blsApkRegistry)), address(blsApkRegistryImplementation), abi.encodeWithSelector(BLSApkRegistry.initialize.selector, deployerAddress, relayerManagerAddr, address(proxyVrfManager)));
 
-        vrfManagerAdmin.upgradeAndCall(
-            ITransparentUpgradeableProxy(address(vrfManager)),
-            address(vrfManagerImplementation),
-            abi.encodeWithSelector(
-                VrfManager.initialize.selector, deployerAddress, proxyBlsApkRegistry, deployerAddress
-            )
-        );
+        vrfManagerAdmin.upgradeAndCall(ITransparentUpgradeableProxy(address(vrfManager)), address(vrfManagerImplementation), abi.encodeWithSelector(VrfManager.initialize.selector, deployerAddress, proxyBlsApkRegistry, deployerAddress));
 
         console.log("deploy proxyBlsApkRegistry:", address(proxyBlsApkRegistry));
         console.log("deploy proxyVrfManager:", address(proxyVrfManager));
         string memory path = "deployed_addresses.json";
-        string memory data = string(
-            abi.encodePacked(
-                '{"proxyBlsApkRegistry": "',
-                vm.toString(address(proxyBlsApkRegistry)),
-                '", ',
-                '"proxyVrfManager": "',
-                vm.toString(address(proxyVrfManager)),
-                '"}'
-            )
-        );
+        string memory data = string(abi.encodePacked('{"proxyBlsApkRegistry": "', vm.toString(address(proxyBlsApkRegistry)), '", ', '"proxyVrfManager": "', vm.toString(address(proxyVrfManager)), '"}'));
         vm.writeJson(data, path);
         vm.stopBroadcast();
     }

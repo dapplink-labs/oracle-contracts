@@ -35,17 +35,13 @@ abstract contract PodManager is Initializable, OwnableUpgradeable {
     }
 
     function registerOperator(string calldata nodeUrl) external {
-        require(
-            operatorWhitelist[msg.sender], "PodManager.registerOperator: this address have not permission to register "
-        );
+        require(operatorWhitelist[msg.sender], "PodManager.registerOperator: this address have not permission to register ");
         blsApkRegistry.registerOperator(msg.sender);
         emit OperatorRegistered(msg.sender, nodeUrl);
     }
 
     function deRegisterOperator() external {
-        require(
-            operatorWhitelist[msg.sender], "PodManager.registerOperator: this address have not permission to register "
-        );
+        require(operatorWhitelist[msg.sender], "PodManager.registerOperator: this address have not permission to register ");
         blsApkRegistry.deregisterOperator(msg.sender);
         emit OperatorDeRegistered(msg.sender);
     }

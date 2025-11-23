@@ -33,16 +33,9 @@ interface IBLSApkRegistry {
 
     function deregisterOperator(address operator) external;
 
-    function registerBLSPublicKey(
-        address operator,
-        PubkeyRegistrationParams calldata params,
-        BN254.G1Point memory msgHash
-    ) external returns (bytes32);
+    function registerBLSPublicKey(address operator, PubkeyRegistrationParams calldata params, BN254.G1Point memory msgHash) external returns (bytes32);
 
-    function checkSignatures(bytes32 msgHash, uint256 referenceBlockNumber, NonSignerAndSignature memory params)
-        external
-        view
-        returns (uint256, bytes32);
+    function checkSignatures(bytes32 msgHash, uint256 referenceBlockNumber, NonSignerAndSignature memory params) external view returns (uint256, bytes32);
 
     function getRegisteredPubkey(address operator) external view returns (BN254.G1Point memory, bytes32);
 

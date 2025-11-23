@@ -8,4 +8,6 @@ import "../interfaces/IOraclePod.sol";
 
 abstract contract OracleManagerStorage is Initializable {
     uint256 public confirmBatchId;
+
+    uint256[50] private __gap;
 }

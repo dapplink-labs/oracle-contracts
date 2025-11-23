@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {IVrfPod} from "../interfaces/IVrfPod.sol";
+import { IVrfPod } from "../interfaces/IVrfPod.sol";
 
 abstract contract VrfPodStorage is IVrfPod {
     struct RandomWordsInfo {
@@ -13,5 +13,5 @@ abstract contract VrfPodStorage is IVrfPod {
 
     mapping(uint256 => RandomWordsInfo) public randomWordsMapping;
 
-    uint256[100] private slot;
+    uint256[100] private __gap;
 }

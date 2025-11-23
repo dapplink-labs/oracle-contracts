@@ -3,13 +3,13 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "../src/pod/EventPod.sol";
-import {EventPodStorage} from "../src/pod/EventPodStorage.sol";
+import { EventPodStorage } from "../src/pod/EventPodStorage.sol";
 import "../src/bls/BLSApkRegistry.sol";
 import "../src/core/EventManager.sol";
 import "../src/interfaces/IBLSApkRegistry.sol";
 import "../src/interfaces/IEventManager.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract EventPodTest is Test {
     EventPod logic;
@@ -21,13 +21,7 @@ contract EventPodTest is Test {
     uint256 requestId = 888;
     string winner = "pos";
 
-    EventPodStorage.PredictEventInfo predictEventInfo = EventPodStorage.PredictEventInfo({
-        requestId: 888,
-        eventDescribe: "Team A vs Team B",
-        predictPosSide: "Team A wins",
-        predictNegSide: "Team B wins",
-        winner: "unknown"
-    });
+    EventPodStorage.PredictEventInfo predictEventInfo = EventPodStorage.PredictEventInfo({ requestId: 888, eventDescribe: "Team A vs Team B", predictPosSide: "Team A wins", predictNegSide: "Team B wins", winner: "unknown" });
 
     function setUp() public {
         vm.prank(deployer);
@@ -74,13 +68,7 @@ contract EventPodTest is Test {
     function testCreateEvent() public {
         pod.createEvent(requestId, "Team A vs Team B", "Team A wins", "Team B wins");
 
-        (
-            uint256 reqId,
-            string memory eventDescribe,
-            string memory posSide,
-            string memory negSide,
-            string memory winner1
-        ) = pod.predictEventMapping(requestId);
+        (uint256 reqId, string memory eventDescribe, string memory posSide, string memory negSide, string memory winner1) = pod.predictEventMapping(requestId);
 
         (string memory posSide1, string memory negSide1, string memory winner11) = pod.fetchEventResult(requestId);
 
@@ -135,37 +123,15 @@ contract EventManagerTest is Test {
         blsRegistry.addOrRemoveBlsRegisterWhitelist(operator, true);
 
         // 构造一组bls公钥和签名
-        BN254.G1Point memory msgHash = BN254.G1Point({
-            X: 18521112453352730579645358173921106118252889045846003563531873900220182176793,
-            Y: 12220611982697050695278792018747974293998452760543899595396661668417277566823
-        });
+        BN254.G1Point memory msgHash = BN254.G1Point({ X: 18521112453352730579645358173921106118252889045846003563531873900220182176793, Y: 12220611982697050695278792018747974293998452760543899595396661668417277566823 });
 
-        BN254.G1Point memory signature = BN254.G1Point({
-            X: 15194033674394012071916983731564882240605499108993224505298052923469296043512,
-            Y: 839159203127434969034550706910060963494405052210926279105817372573420151443
-        });
+        BN254.G1Point memory signature = BN254.G1Point({ X: 15194033674394012071916983731564882240605499108993224505298052923469296043512, Y: 839159203127434969034550706910060963494405052210926279105817372573420151443 });
 
-        BN254.G2Point memory pubKeyG2 = BN254.G2Point({
-            X: [
-                6814450613988925037276906495559354220267038225890288520888556922179861427221,
-                11097154366204527428819849175191533397314611771099148982308553889852330000313
-            ],
-            Y: [
-                20799884507081215979545766399242808376431798816319714422985505673585902041706,
-                13670248609089265475970799020243713070902269374832615406626549692922451548915
-            ]
-        });
+        BN254.G2Point memory pubKeyG2 = BN254.G2Point({ X: [6814450613988925037276906495559354220267038225890288520888556922179861427221, 11097154366204527428819849175191533397314611771099148982308553889852330000313], Y: [20799884507081215979545766399242808376431798816319714422985505673585902041706, 13670248609089265475970799020243713070902269374832615406626549692922451548915] });
 
-        BN254.G1Point memory pubKeyG1 = BN254.G1Point({
-            X: 21552948824382449035487501529869156133453687741764572533699451941285719913479,
-            Y: 18512095983377956955654133313299197583137445769983185530805027107069225976299
-        });
+        BN254.G1Point memory pubKeyG1 = BN254.G1Point({ X: 21552948824382449035487501529869156133453687741764572533699451941285719913479, Y: 18512095983377956955654133313299197583137445769983185530805027107069225976299 });
 
-        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry.PubkeyRegistrationParams({
-            pubkeyG1: pubKeyG1,
-            pubkeyG2: pubKeyG2,
-            pubkeyRegistrationSignature: signature
-        });
+        IBLSApkRegistry.PubkeyRegistrationParams memory params = IBLSApkRegistry.PubkeyRegistrationParams({ pubkeyG1: pubKeyG1, pubkeyG2: pubKeyG2, pubkeyRegistrationSignature: signature });
 
         // operator注册新的 pubkey
         vm.prank(operator);
@@ -249,30 +215,12 @@ contract EventManagerTest is Test {
 
         IBLSApkRegistry.NonSignerAndSignature memory noSignerAndSignature = IBLSApkRegistry.NonSignerAndSignature({
             nonSignerPubkeys: new BN254.G1Point[](0),
-            apkG2: BN254.G2Point({
-                X: [
-                    6814450613988925037276906495559354220267038225890288520888556922179861427221,
-                    11097154366204527428819849175191533397314611771099148982308553889852330000313
-                ],
-                Y: [
-                    20799884507081215979545766399242808376431798816319714422985505673585902041706,
-                    13670248609089265475970799020243713070902269374832615406626549692922451548915
-                ]
-            }),
-            sigma: BN254.G1Point({
-                X: 15194033674394012071916983731564882240605499108993224505298052923469296043512,
-                Y: 839159203127434969034550706910060963494405052210926279105817372573420151443
-            }),
+            apkG2: BN254.G2Point({ X: [6814450613988925037276906495559354220267038225890288520888556922179861427221, 11097154366204527428819849175191533397314611771099148982308553889852330000313], Y: [20799884507081215979545766399242808376431798816319714422985505673585902041706, 13670248609089265475970799020243713070902269374832615406626549692922451548915] }),
+            sigma: BN254.G1Point({ X: 15194033674394012071916983731564882240605499108993224505298052923469296043512, Y: 839159203127434969034550706910060963494405052210926279105817372573420151443 }),
             totalStake: 888
         });
 
-        IEventManager.PredictEvents memory predictEvents = IEventManager.PredictEvents({
-            msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
-            blockNumber: block.number - 1,
-            requestId: 888,
-            blockHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
-            winner: "pos"
-        });
+        IEventManager.PredictEvents memory predictEvents = IEventManager.PredictEvents({ msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935, blockNumber: block.number - 1, requestId: 888, blockHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935, winner: "pos" });
 
         vm.prank(aggregator);
         eventManager.fillEventResultWithSignature(eventPod, predictEvents, noSignerAndSignature);
@@ -284,30 +232,12 @@ contract EventManagerTest is Test {
     function testFillSymbolPriceWithoutWhitelistOrAuthority() public {
         IBLSApkRegistry.NonSignerAndSignature memory noSignerAndSignature = IBLSApkRegistry.NonSignerAndSignature({
             nonSignerPubkeys: new BN254.G1Point[](0),
-            apkG2: BN254.G2Point({
-                X: [
-                    19552866287184064427995511006223057169680536518603642638640105365054342788017,
-                    19912786774583403697047133238687463296134677575618298225286334615015816916116
-                ],
-                Y: [
-                    2970994197396269892653525920024039859830728356246595152296683945713431676344,
-                    18119535013136907197909765078809655896321461883746857179927989514870514777799
-                ]
-            }),
-            sigma: BN254.G1Point({
-                X: 15723530600246276940894768360396890326319571568844052976858037242805072605559,
-                Y: 11650315804718231422577338154702931145725917843701074925949828011449296498014
-            }),
+            apkG2: BN254.G2Point({ X: [19552866287184064427995511006223057169680536518603642638640105365054342788017, 19912786774583403697047133238687463296134677575618298225286334615015816916116], Y: [2970994197396269892653525920024039859830728356246595152296683945713431676344, 18119535013136907197909765078809655896321461883746857179927989514870514777799] }),
+            sigma: BN254.G1Point({ X: 15723530600246276940894768360396890326319571568844052976858037242805072605559, Y: 11650315804718231422577338154702931145725917843701074925949828011449296498014 }),
             totalStake: 888
         });
 
-        IEventManager.PredictEvents memory predictEvents = IEventManager.PredictEvents({
-            msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
-            blockNumber: block.number - 1,
-            requestId: 888,
-            blockHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935,
-            winner: "pos"
-        });
+        IEventManager.PredictEvents memory predictEvents = IEventManager.PredictEvents({ msgHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935, blockNumber: block.number - 1, requestId: 888, blockHash: 0xea83cdcdd06bf61e414054115a551e23133711d0507dcbc07a4bab7dc4581935, winner: "pos" });
 
         vm.prank(address(0xE1));
         vm.expectRevert("PodManager.onlyAggregatorManager: not the aggregator address");
