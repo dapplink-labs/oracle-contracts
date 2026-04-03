@@ -6,5 +6,7 @@ import "../interfaces/IKYCPod.sol";
 abstract contract KYCPodStorage is IKYCPod {
     mapping(address => Record) public kycRecords; // user => Record
 
+    address public kycManager;
+
     uint256[100] private __gap;
 }

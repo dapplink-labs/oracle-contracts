@@ -11,8 +11,14 @@ import "./KYCPodStorage.sol";
  * @dev Uses the user address as the key; the DID is not exposed on-chain.
  */
 contract KYCPod is Initializable, OwnableUpgradeable, KYCPodStorage {
-    function initialize(address _initialOwner) external initializer {
+    function initialize(address _initialOwner, address _kycManager) external initializer {
         __Ownable_init(_initialOwner);
+        kycManager = _kycManager;
+    }
+
+    modifier onlyKycManager() {
+        require(msg.sender == kycManager, "onlyKycManager can call this function");
+        _;
     }
 
     /**
@@ -25,7 +31,7 @@ contract KYCPod is Initializable, OwnableUpgradeable, KYCPodStorage {
      *   did: private identity identifier
      *   policy_id / version: policy context
      */
-    function recordVerification(address user, bool verified, uint256 commitment) external onlyOwner {
+    function recordVerification(address user, bool verified, uint256 commitment) external onlyKycManager {
         Record storage rec = kycRecords[user];
         rec.commitment = commitment;
 
@@ -43,5 +49,9 @@ contract KYCPod is Initializable, OwnableUpgradeable, KYCPodStorage {
 
     function getCommitment(address user) external view returns (uint256) {
         return kycRecords[user].commitment;
+    }
+
+    function setKycManager(address _kycManager) external onlyOwner {
+        kycManager = _kycManager;
     }
 }
